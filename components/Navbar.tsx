@@ -16,11 +16,11 @@ const Navbar = () => {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const y = el.getBoundingClientRect().top + window.scrollY - 110; // navbar offset
+    const y = el.getBoundingClientRect().top + window.scrollY - 110; 
     window.scrollTo({ top: y, behavior: "smooth" });
   };
 
-  // lock scroll behind menu on mobile
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -30,7 +30,7 @@ const Navbar = () => {
     };
   }, [open]);
 
-  // close on Escape
+ 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
