@@ -1,11 +1,123 @@
-import React from 'react'
+import React from "react";
+import Image from "next/image";
+import StatsCarousel from "../components/StatsCarousel";
+
+
 
 const Stats = () => {
   return (
-    <div>
-      
-    </div>
-  )
-}
+    <div className="w-full py-24 px-6 m-8">
+      <h1
+        style={{ fontFamily: "Street Flow NYC" }}
+        className="text-[#EBA274] text-6xl ml-8 pb-12"
+      >
+        HACKAI 2025 had...
+      </h1>
 
-export default Stats
+      {/* ✅ Mobile swipe */}
+      <div className="md:hidden">
+
+        <div className="flex gap-6 overflow-x-auto px-2 pb-4 snap-x snap-mandatory scroll-px-6 [-webkit-overflow-scrolling:touch]">
+          {/* <StatCard src="/Stats/hackCount.svg" alt="Hackers Count" text="250+ Hackers" />
+          <StatCard src="/Stats/prizeM.svg" alt="Prize Money" text="$3000 in prizes" />
+          <StatCard src="/Stats/dialoqueBubbleFlip.svg" alt="Projects Count" text="50+ Projects" /> */}
+          <StatsCarousel />
+        </div>
+
+        {/* dots */}
+        {/* <div className="mt-4 flex justify-center gap-2 opacity-70">
+          <span className="h-2 w-2 rounded-full bg-white/40" />
+          <span className="h-2 w-2 rounded-full bg-white/40" />
+          <span className="h-2 w-2 rounded-full bg-white/40" />
+        </div> */}
+
+        {/* optional mascot */}
+        <div className="flex justify-center -mt-12">
+          <Image
+            src="/Stats/bear.svg"
+            alt="Bear Mascot"
+            width={420}
+            height={320}
+            className="w-[260px]"
+            priority
+          />
+        </div>
+
+        
+      </div>
+
+      {/* ✅ Desktop layout (your existing scene) */}
+      <div className="hidden md:block">
+        <div className="relative mx-auto mt-12 w-full max-w-6xl h-[520px] sm:h-[580px] md:h-[640px]">
+          <Image
+            src="/Stats/bear.svg"
+            alt="Bear Mascot"
+            width={600}
+            height={400}
+            className="absolute left-1/2 top-1/2 w-[300px] sm:w-[360px] md:w-[440px] lg:w-[520px] -translate-x-1/2 -translate-y-1/2"
+            priority
+          />
+
+          <div className="absolute left-[10%] top-[-12%] w-[260px] sm:w-[320px] md:w-[380px]">
+            <div className="relative w-full">
+              <Image
+                src="/Stats/hackCount.svg"
+                alt="Hackers Count"
+                width={400}
+                height={300}
+                className="w-full h-auto"
+                priority
+              />
+              <h2
+                style={{ fontFamily: "Street Flow NYC" }}
+                className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
+              >
+                250+ Hackers
+              </h2>
+            </div>
+          </div>
+
+          <div className="absolute right-[4%] top-[-20%] w-[260px] sm:w-[320px] md:w-[380px]">
+            <div className="relative w-full">
+              <Image
+                src="/Stats/prizeM.svg"
+                alt="Prize Money"
+                width={400}
+                height={300}
+                className="w-full h-auto"
+                priority
+              />
+              <h2
+                style={{ fontFamily: "Street Flow NYC" }}
+                className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
+              >
+                $3000 in prizes
+              </h2>
+            </div>
+          </div>
+
+          <div className="absolute left-[20%] bottom-[-15%] w-[260px] sm:w-[320px] md:w-[380px]">
+            <div className="relative w-full">
+              <Image
+                src="/Stats/projCount.svg"
+                alt="Projects Count"
+                width={400}
+                height={300}
+                className="w-full h-auto"
+                priority
+              />
+              <h2
+                style={{ fontFamily: "Street Flow NYC" }}
+                className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
+              >
+                50+ Projects
+              </h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Stats;

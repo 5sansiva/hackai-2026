@@ -75,21 +75,21 @@ export default function Home() {
                         type="button"
                         onClick={() => window.open("https://coda.io/form/Hack-AI-2026_dlNfpT9nhkE", "_blank")}
                         className="
-                        inline-flex items-center justify-center
-                        px-6 py-2.5 md:px-7 md:py-3
-                        rounded-full
-                        bg-[#043335]
-                        text-[#b7d3df] text-base md:text-xl
-                        tracking-widest
+                        relative isolate inline-flex items-center justify-center
+                        px-6 py-2.5 md:px-7 md:py-3 rounded-full
+                        bg-[#043335] text-[#b7d3df] text-base md:text-xl tracking-widest
                         ring-5 ring-black
                         shadow-[inset_0_0_0_3.5px_rgba(255,255,255,0.08),0_7px_0_0_rgba(0,0,0,0.55)]
-                        transition-all duration-200
-                        hover:-translate-y-0.5
-                        hover:shadow-[0_0_22px_rgba(91,227,255,0.45),inset_0_0_0_3.5px_rgba(255,255,255,0.08),0_7px_0_0_rgba(0,0,0,0.55)]
-                        hover:ring-[#5be3ff]
-                        active:translate-y-0
-                        focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#5be3ff]
-                        "
+                        transform-gpu will-change-transform
+                        transition-transform duration-75 ease-out
+                        hover:-translate-y-0.5 active:translate-y-0
+
+                        after:content-[''] after:absolute after:inset-[-8px] after:-z-10 after:rounded-full
+                        after:opacity-0 hover:after:opacity-100
+                        after:transition-opacity after:duration-75 after:ease-linear
+                        after:bg-[radial-gradient(circle,rgba(91,227,255,0.55),transparent_60%)]
+                    "
+
                         style={{ fontFamily: "Octin Spraypaint" }}
                     >
                         APPLY NOW!
@@ -99,6 +99,6 @@ export default function Home() {
                 
             </div>
         </div>
-
+      
     );
 }
