@@ -2,6 +2,21 @@ import React from "react";
 import Image from "next/image";
 
 const Navbar = () => {
+
+  const NAV = [
+    { label: "HOME", id: "home" },
+    { label: "ABOUT", id: "about" },
+    { label: "STATS", id: "stats" },
+  ];
+
+  const scrollToId = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const y = el.getBoundingClientRect().top + window.scrollY - 110; // navbar offset
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <nav className="mx-auto mt-4 w-[min(1100px,calc(100%-2rem))] rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-6 py-4">
@@ -19,17 +34,19 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-10">
-            {["ABOUT"].map((label) => (
-              <a
-                key={label}
-                href={`#${label.toLowerCase().replace(/\s+/g, "-")}`}
+            {NAV.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => scrollToId(item.id)}
                 className="text-white/90 hover:text-white transition-colors text-sm tracking-widest uppercase"
                 style={{ fontFamily: "Street Flow NYC" }}
               >
-                {label}
-              </a>
+                {item.label}
+              </button>
             ))}
           </div>
+
 
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-4">
