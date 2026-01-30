@@ -6,14 +6,14 @@ export default function Home() {
         <div className="flex items-center w-full justify-center h-full">
             <div className="relative w-full max-w-[1600px] h-[90vh] max-h-[900px]">
                 
-                <div className="absolute left-1/2 top-[23%] -translate-x-1/2 z-30 text-center">
-                    <div
-                        className="text-white text-lg md:text-2xl leading-tight drop-shadow-[0_3px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
-                        style={{ fontFamily: "Street Flow NYC" }}
-                    >
-                        Artificial Intelligence Society Presents
-                    </div>
+               
+                <div
+                    className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl leading-tight drop-shadow-[0_3px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
+                    style={{ fontFamily: "Street Flow NYC" }}
+                >
+                    Artificial Intelligence Society Presents
                 </div>
+                
 
                 <Image
                 src="/Home/graffitti.svg"
@@ -37,21 +37,21 @@ export default function Home() {
                 />
 
                <Image
-                src="/Home/hackAiLogo.svg"
+                src="/Home/hackAiLogoColor.webp"
                 alt="hackAi Logo"
-                width={1200}
-                height={1200}
+                width={900}
+                height={900}
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
                 />
 
-                <div className="absolute left-1/2 top-[66%] -translate-x-1/2 z-30 text-center">
-                    <div
-                        className="text-white text-2xl md:text-4xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest mt-12"
-                        style={{ fontFamily: "Street Flow NYC" }}
+                
+                <div
+                    className="absolute left-1/2 top-[66%] -translate-x-1/2 z-30 text-center text-white text-2xl md:text-4xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest mt-12"
+                    style={{ fontFamily: "Street Flow NYC" }}
                     >
                         March 7-8, 2026
-                    </div>
                 </div>
+                
                 
                 <div className="absolute left-1/2 bottom-[8%] -translate-x-1/2 z-30 flex gap-6">
                     {/* <button
