@@ -6,6 +6,7 @@ import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
+import TracksPage from "./Tracks";
 
 export default function HackAIPage() {
   const [loading, setLoading] = useState(true);
@@ -60,6 +61,13 @@ export default function HackAIPage() {
               className="min-h-screen flex items-center justify-center m-6"
             >
               <Stats />
+            </section>
+
+            <section
+              id="tracks"
+              className="min-h-screen flex items-center justify-center m-6"
+            >
+              <TracksPage />
             </section>
 
           </main>
