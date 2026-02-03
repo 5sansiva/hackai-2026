@@ -13,48 +13,39 @@ export default function HackAIPage() {
 
   return (
     <div className="relative">
-      <Head>
-        <title>HackAI</title>
-        <link rel="icon" type="image/png" href="/hackai-logo.png" />
-        <meta
-          name="description"
-          content="Welcome to HackAI: the biggest AI hackathon in North Texas!"
-        />
+      <Head> 
+        <title>HackAI</title> 
+        <link rel="icon" type="image/png" href="/hackai-logo.png" /> 
+        <meta name="description" content="Welcome to HackAI: the biggest AI hackathon in North Texas!" /> 
       </Head>
 
+      {/* Background always visible so the lighting has something to reveal */}
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          backgroundColor: "black",
+          backgroundImage: "url(/mainbg.svg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
       {loading && <Preloader onDone={() => setLoading(false)} />}
 
-        <div className="relative">
-          <div
-            className="fixed inset-0 -z-10"
-            style={{
-              backgroundColor: "black",
-              backgroundImage: "url(/mainbg.svg)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-            }}
-          />
 
-          <Navbar />
+      {/* Rest of the content */}
+      <div className="relative">
+        <Navbar />
 
-          <main
-            className={`relative pt-24 ${loading ? "pointer-events-none" : ""}`}
-          >
-            <section
-              id="home"
-              className="min-h-screen flex items-center justify-center"
-            >
-              <Home />
-            </section>
-
-            <section
-              id="about"
-              className="min-h-screen flex items-center justify-center"
-            >
-              <About />
-            </section>
+        <main className="relative pt-24">
+          <section id="home" className="min-h-screen flex items-center justify-center">
+            <Home />
+          </section>
+          
+          <section id="about" className="min-h-screen flex items-center justify-center">
+            <About />
+          </section>
 
             <section
               id="stats"
@@ -74,7 +65,8 @@ export default function HackAIPage() {
         </div>
 
 
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }
