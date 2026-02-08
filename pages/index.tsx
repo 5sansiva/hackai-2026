@@ -31,6 +31,24 @@ export default function HackAIPage() {
           backgroundRepeat: "no-repeat",
         }}
       />
+      
+      {/* Desktop MLH (not fixed) */}
+        <div className="hidden md:block relative">
+          <a
+            id="mlh-trust-badge-desktop"
+            className="absolute right-6 -top-2 z-20 block w-[110px]"
+            href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img
+              src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
+              alt="Major League Hacking 2026 Hackathon Season"
+              className="w-full h-auto"
+            />
+          </a>
+        </div>
+
 
       {loading && <Preloader onDone={() => setLoading(false)} />}
 
@@ -38,6 +56,29 @@ export default function HackAIPage() {
       {/* Rest of the content */}
       <div className="relative">
         <Navbar />
+        
+
+        {/* Mobile MLH spacer (reserves vertical space below fixed navbar) */}
+        <div className="md:hidden h-[88px]" />
+
+        {/* Mobile MLH badge (not fixed) */}
+        <div className="md:hidden w-full flex justify-end pr-4 -mt-[88px] pt-4 pb-2">
+          <a
+            id="mlh-trust-badge-mobile"
+            className="block w-[64px] sm:w-[72px]"
+            href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <img
+              src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
+              alt="Major League Hacking 2026 Hackathon Season"
+              className="w-full h-auto"
+            />
+          </a>
+        </div>
+
+
 
         <main className="relative pt-24">
           <section id="home" className="min-h-screen flex items-center justify-center">
