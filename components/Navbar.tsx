@@ -10,7 +10,7 @@ const Navbar = () => {
     { label: "HOME", id: "home" },
     { label: "ABOUT", id: "about" },
     { label: "STATS", id: "stats" },
-    { label: "FAQS", id: "faqs" },
+    // { label: "FAQS", id: "faqs" },
   ];
 
   const scrollToId = (id: string) => {
