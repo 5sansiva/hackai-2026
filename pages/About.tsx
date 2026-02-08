@@ -87,7 +87,7 @@ const About = () => {
               learn and build, while giving your company direct access to high-signal
               talent and meaningful brand visibility. Sponsors can engage with
               participants through tech talks, workshops, mentorship, and challenge
-              prompts — and walk away with strong recruiting leads and fresh ideas.
+              prompts and walk away with strong recruiting leads and fresh ideas.
             </p>
 
             <p
