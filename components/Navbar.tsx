@@ -17,10 +17,9 @@ const Navbar = () => {
     const el = document.getElementById(id);
     if (!el) return;
 
-    const y = el.getBoundingClientRect().top + window.scrollY - 110; 
+    const y = el.getBoundingClientRect().top + window.scrollY - 110; // navbar offset
     window.scrollTo({ top: y, behavior: "smooth" });
   };
-
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +30,6 @@ const Navbar = () => {
     };
   }, [open]);
 
- 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -42,8 +40,9 @@ const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      <nav className="mx-auto mt-4 w-[min(1100px,calc(100%-2rem))] rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-6 py-4">
+      <nav className="mx-auto mt-4 w-[calc(100%-10.5rem)] md:w-[calc(100%-12.5rem)] lg:w-[min(1100px,calc(100%-2rem))] rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-6 py-4">
         <div className="flex items-center justify-between">
+          {/* Logo */}
           <div className="flex items-center gap-3">
             <a href="#home" className="relative h-10 w-24">
               <Image
@@ -67,39 +66,61 @@ const Navbar = () => {
                   setOpen(false);
                 }}
                 className="
-                  group w-full text-left
                   rounded-xl px-4 py-3
-                  text-white/90 text-base tracking-widest uppercase
+                  text-white/90 text-sm tracking-widest uppercase
                   transition-all duration-150 ease-out
-                  hover:text-white
-                  hover:bg-white/10
+                  hover:text-white hover:bg-white/10
                   hover:shadow-[0_0_18px_rgba(91,227,255,0.35)]
-                  hover:-translate-y-[1px]
-                  active:translate-y-0
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5be3ff]/70
                 "
                 style={{ fontFamily: "Street Flow NYC" }}
               >
-                <span className="inline-flex items-center gap-2">
-                  {item.label}
-                  
-                </span>
+                {item.label}
               </button>
             ))}
-
           </div>
 
           <div className="flex items-center gap-4">
             {/* Desktop socials */}
             <div className="hidden sm:flex items-center gap-4">
-              <button onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}>
-                <img src="Logos/instagram.png" className="h-[1.5rem] object-contain" alt="Instagram" />
+              <button
+                type="button"
+                onClick={() =>
+                  window.open("https://www.instagram.com/utdais/", "_blank")
+                }
+                aria-label="Instagram"
+              >
+                <img
+                  src="Logos/instagram.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="Instagram"
+                />
               </button>
-              <button onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}>
-                <img src="Logos/discord.png" className="h-[1.5rem] object-contain" alt="YouTube" />
+
+              <button
+                type="button"
+                onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
+                aria-label="Discord"
+              >
+                <img
+                  src="Logos/discord.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="Discord"
+                />
               </button>
-              <button onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}>
-                <img src="Logos/linkedin.png" className="h-[1.5rem] object-contain" alt="LinkedIn" />
+
+              <button
+                type="button"
+                onClick={() =>
+                  window.open("https://www.linkedin.com/company/ais-utd", "_blank")
+                }
+                aria-label="LinkedIn"
+              >
+                <img
+                  src="Logos/linkedin.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="LinkedIn"
+                />
               </button>
             </div>
 
@@ -156,16 +177,46 @@ const Navbar = () => {
               </button>
             ))}
 
-            {/* Socials for mobile (optional) */}
+            {/* Socials for mobile */}
             <div className="pt-2 flex items-center gap-4 sm:hidden">
-               <button onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}>
-                <img src="Logos/instagram.png" className="h-[1.5rem] object-contain" alt="Instagram" />
+              <button
+                type="button"
+                onClick={() =>
+                  window.open("https://www.instagram.com/utdais/", "_blank")
+                }
+                aria-label="Instagram"
+              >
+                <img
+                  src="Logos/instagram.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="Instagram"
+                />
               </button>
-              <button onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}>
-                <img src="Logos/discord.png" className="h-[1.5rem] object-contain" alt="YouTube" />
+
+              <button
+                type="button"
+                onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
+                aria-label="Discord"
+              >
+                <img
+                  src="Logos/discord.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="Discord"
+                />
               </button>
-              <button onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}>
-                <img src="Logos/linkedin.png" className="h-[1.5rem] object-contain" alt="LinkedIn" />
+
+              <button
+                type="button"
+                onClick={() =>
+                  window.open("https://www.linkedin.com/company/ais-utd", "_blank")
+                }
+                aria-label="LinkedIn"
+              >
+                <img
+                  src="Logos/linkedin.png"
+                  className="h-[1.5rem] object-contain"
+                  alt="LinkedIn"
+                />
               </button>
             </div>
           </div>
@@ -178,8 +229,7 @@ const Navbar = () => {
           type="button"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/30"
-          style={{ zIndex: -1 }}
+          className="md:hidden fixed inset-0 bg-black/30 z-40"
         />
       )}
     </header>
