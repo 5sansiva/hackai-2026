@@ -62,12 +62,12 @@ export default function HackAIPage() {
               <TracksPage />
             </section> */}
 
-            <section
+            {/* <section
               id="faqs"
               className="min-h-screen flex items-center justify-center m-6"
             >
               <FAQSection />
-            </section>
+            </section> */}
 
         </main>
 
