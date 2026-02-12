@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
 import Image from "next/image";
+import Link from "next/link";
+
+
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -40,7 +44,18 @@ const Navbar = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
-      <nav className="mx-auto mt-4 w-[calc(100%-10.5rem)] md:w-[calc(100%-12.5rem)] lg:w-[min(1100px,calc(100%-2rem))] rounded-full bg-white/10 backdrop-blur-md border border-white/15 px-6 py-4">
+      <nav
+        className="mx-auto mt-8 w-[calc(100%-10.5rem)] md:w-[calc(100%-12.5rem)] lg:w-[min(1100px,calc(100%-2rem))] px-6 py-2"
+        style={{
+          borderRadius: '2rem',
+          background: 'linear-gradient(120deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 100%)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+          backdropFilter: 'blur(18px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+          border: '.5px solid rgba(255,255,255,0.35)',
+          outline: '1.5px solid rgba(255,255,255,0.18)',
+        }}
+      >
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
@@ -65,19 +80,21 @@ const Navbar = () => {
                   scrollToId(item.id);
                   setOpen(false);
                 }}
-                className="
-                  rounded-xl px-4 py-3
-                  text-white/90 text-sm tracking-widest uppercase
-                  transition-all duration-150 ease-out
-                  hover:text-white hover:bg-white/10
-                  hover:shadow-[0_0_18px_rgba(91,227,255,0.35)]
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5be3ff]/70
-                "
-                style={{ fontFamily: "Street Flow NYC" }}
+                className="py-2 px-4 text-white cursor-pointer flex justify-center font-bold rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
+                style={{ fontFamily: 'Street Flow NYC' }}
               >
                 {item.label}
               </button>
             ))}
+            {/* Sign In button for desktop */}
+            <Link href="/signin">
+              <button
+                className="rounded-full px-4 py-3 ml-4 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
+                style={{ fontFamily: "Street Flow NYC" }}
+              >
+                Sign In
+              </button>
+            </Link>
           </div>
 
           <div className="flex items-center gap-4">
@@ -85,42 +102,27 @@ const Navbar = () => {
             <div className="hidden sm:flex items-center gap-4">
               <button
                 type="button"
-                onClick={() =>
-                  window.open("https://www.instagram.com/utdais/", "_blank")
-                }
+                onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}
                 aria-label="Instagram"
+                className="text-white hover:text-[#E1306C] transition-colors duration-300"
               >
-                <img
-                  src="Logos/instagram.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="Instagram"
-                />
+                <FaInstagram size={24} />
               </button>
-
               <button
                 type="button"
                 onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
                 aria-label="Discord"
+                className="text-white hover:text-[#5865F2] transition-colors duration-300"
               >
-                <img
-                  src="Logos/discord.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="Discord"
-                />
+                <FaDiscord size={24} />
               </button>
-
               <button
                 type="button"
-                onClick={() =>
-                  window.open("https://www.linkedin.com/company/ais-utd", "_blank")
-                }
+                onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}
                 aria-label="LinkedIn"
+                className="text-white hover:text-[#0A66C2] transition-colors duration-300"
               >
-                <img
-                  src="Logos/linkedin.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="LinkedIn"
-                />
+                <FaLinkedin size={24} />
               </button>
             </div>
 
@@ -178,45 +180,39 @@ const Navbar = () => {
             ))}
 
             {/* Socials for mobile */}
+            {/* Sign In button for mobile */}
+            <Link href="/signin">
+              <button
+                className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
+                style={{ fontFamily: "Street Flow NYC" }}
+              >
+                Sign In
+              </button>
+            </Link>
             <div className="pt-2 flex items-center gap-4 sm:hidden">
               <button
                 type="button"
-                onClick={() =>
-                  window.open("https://www.instagram.com/utdais/", "_blank")
-                }
+                onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}
                 aria-label="Instagram"
+                className="text-white hover:text-[#E1306C] transition-colors duration-300"
               >
-                <img
-                  src="Logos/instagram.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="Instagram"
-                />
+                <FaInstagram size={24} />
               </button>
-
               <button
                 type="button"
                 onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
                 aria-label="Discord"
+                className="text-white hover:text-[#5865F2] transition-colors duration-300"
               >
-                <img
-                  src="Logos/discord.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="Discord"
-                />
+                <FaDiscord size={24} />
               </button>
-
               <button
                 type="button"
-                onClick={() =>
-                  window.open("https://www.linkedin.com/company/ais-utd", "_blank")
-                }
+                onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}
                 aria-label="LinkedIn"
+                className="text-white hover:text-[#0A66C2] transition-colors duration-300"
               >
-                <img
-                  src="Logos/linkedin.png"
-                  className="h-[1.5rem] object-contain"
-                  alt="LinkedIn"
-                />
+                <FaLinkedin size={24} />
               </button>
             </div>
           </div>
