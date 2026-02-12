@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
 import TracksPage from "./Tracks";
 import FAQSection from "@/components/FaqCards";
+import Donors from "./Donors";
 
 export default function HackAIPage() {
   const [loading, setLoading] = useState(true);
@@ -91,7 +92,7 @@ export default function HackAIPage() {
 
             <section
               id="stats"
-              className="min-h-screen flex items-center justify-center m-6"
+              className="min-h-screen flex items-center justify-center m-4"
             >
               <Stats />
             </section>
@@ -104,11 +105,20 @@ export default function HackAIPage() {
             </section> */}
 
             <section
+              id="donors"
+              className="min-h-screen flex items-center justify-center m-4"
+            >
+              <Donors />
+            </section>
+
+            <section
               id="faqs"
-              className="min-h-screen flex items-center justify-center m-6"
+              className="min-h-screen flex items-center justify-center m-4"
             >
               <FAQSection />
             </section>
+
+            
 
         </main>
 
