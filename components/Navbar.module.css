@@ -1,0 +1,26 @@
+.navbar-link {
+  font-family: 'Alfa Slab One', cursive;
+  color: #fff;
+  position: relative;
+  transition: color 0.3s;
+}
+
+.navbar-link:hover {
+  color: #FF9A2E; /* highlight color */
+}
+
+.navbar-link::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 3px;
+  background: #FF9A2E;
+  transition: width 0.3s;
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+}
+
+.navbar-link:hover::after {
+  width: 100%;
+}
