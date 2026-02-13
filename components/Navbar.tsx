@@ -5,8 +5,6 @@ import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 
-
-
 const Navbar = () => {
   const [open, setOpen] = useState(false);
 
@@ -14,6 +12,7 @@ const Navbar = () => {
     { label: "HOME", id: "home" },
     { label: "ABOUT", id: "about" },
     { label: "STATS", id: "stats" },
+    { label: "DONORS", id: "donors" },
     { label: "FAQS", id: "faqs" },
   ];
 
@@ -47,19 +46,29 @@ const Navbar = () => {
       <nav
         className="mx-auto mt-8 w-[calc(100%-10.5rem)] md:w-[calc(100%-12.5rem)] lg:w-[min(1100px,calc(100%-2rem))] px-6 py-2"
         style={{
-          borderRadius: '2rem',
-          background: 'linear-gradient(120deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 100%)',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
-          backdropFilter: 'blur(18px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-          border: '.5px solid rgba(255,255,255,0.35)',
-          outline: '1.5px solid rgba(255,255,255,0.18)',
+          borderRadius: "2rem",
+          background:
+            "linear-gradient(120deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 100%)",
+          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.18)",
+          backdropFilter: "blur(18px) saturate(180%)",
+          WebkitBackdropFilter: "blur(18px) saturate(180%)",
+          border: ".5px solid rgba(255,255,255,0.35)",
+          outline: "1.5px solid rgba(255,255,255,0.18)",
         }}
       >
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <a href="#home" className="relative h-10 w-24">
+            {/* Use scrollToId so it respects your offset */}
+            <button
+              type="button"
+              onClick={() => {
+                scrollToId("home");
+                setOpen(false);
+              }}
+              className="relative h-10 w-24"
+              aria-label="Go to home"
+            >
               <Image
                 src="/Home/hackAiLogo.svg"
                 alt="HackAI"
@@ -67,7 +76,7 @@ const Navbar = () => {
                 className="object-contain"
                 priority
               />
-            </a>
+            </button>
           </div>
 
           {/* Desktop Links */}
@@ -81,11 +90,12 @@ const Navbar = () => {
                   setOpen(false);
                 }}
                 className="py-2 px-4 text-white cursor-pointer flex justify-center font-bold rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
-                style={{ fontFamily: 'Street Flow NYC' }}
+                style={{ fontFamily: "Street Flow NYC" }}
               >
                 {item.label}
               </button>
             ))}
+
             {/* Sign In button for desktop */}
             {/* <Link href="/signin">
               <button
@@ -102,7 +112,9 @@ const Navbar = () => {
             <div className="hidden sm:flex items-center gap-4">
               <button
                 type="button"
-                onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}
+                onClick={() =>
+                  window.open("https://www.instagram.com/utdais/", "_blank")
+                }
                 aria-label="Instagram"
                 className="text-white hover:text-[#E1306C] transition-colors duration-300"
               >
@@ -110,7 +122,9 @@ const Navbar = () => {
               </button>
               <button
                 type="button"
-                onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
+                onClick={() =>
+                  window.open("https://discord.gg/756atmKkAq", "_blank")
+                }
                 aria-label="Discord"
                 className="text-white hover:text-[#5865F2] transition-colors duration-300"
               >
@@ -118,7 +132,12 @@ const Navbar = () => {
               </button>
               <button
                 type="button"
-                onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}
+                onClick={() =>
+                  window.open(
+                    "https://www.linkedin.com/company/ais-utd",
+                    "_blank"
+                  )
+                }
                 aria-label="LinkedIn"
                 className="text-white hover:text-[#0A66C2] transition-colors duration-300"
               >
@@ -132,7 +151,7 @@ const Navbar = () => {
               onClick={() => setOpen((v) => !v)}
               aria-label="Open menu"
               aria-expanded={open}
-              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-white/90 hover:text-white"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-white/90 hover:text-white relative z-[60]"
             >
               <span className="relative block h-5 w-5">
                 <span
@@ -156,11 +175,13 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile dropdown */}
-      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))]">
+      {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
+      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
         <div
           className={`mt-3 overflow-hidden rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
-            open ? "max-h-80 opacity-100" : "max-h-0 opacity-0"
+            open
+              ? "max-h-80 opacity-100 pointer-events-auto"
+              : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
           <div className="px-6 py-5 flex flex-col gap-4">
@@ -179,7 +200,6 @@ const Navbar = () => {
               </button>
             ))}
 
-            {/* Socials for mobile */}
             {/* Sign In button for mobile */}
             {/* <Link href="/signin">
               <button
@@ -189,10 +209,14 @@ const Navbar = () => {
                 Sign In
               </button>
             </Link> */}
+
+            {/* Socials for mobile */}
             <div className="pt-2 flex items-center gap-4 sm:hidden">
               <button
                 type="button"
-                onClick={() => window.open("https://www.instagram.com/utdais/", "_blank")}
+                onClick={() =>
+                  window.open("https://www.instagram.com/utdais/", "_blank")
+                }
                 aria-label="Instagram"
                 className="text-white hover:text-[#E1306C] transition-colors duration-300"
               >
@@ -200,7 +224,9 @@ const Navbar = () => {
               </button>
               <button
                 type="button"
-                onClick={() => window.open("https://discord.gg/756atmKkAq", "_blank")}
+                onClick={() =>
+                  window.open("https://discord.gg/756atmKkAq", "_blank")
+                }
                 aria-label="Discord"
                 className="text-white hover:text-[#5865F2] transition-colors duration-300"
               >
@@ -208,7 +234,12 @@ const Navbar = () => {
               </button>
               <button
                 type="button"
-                onClick={() => window.open("https://www.linkedin.com/company/ais-utd", "_blank")}
+                onClick={() =>
+                  window.open(
+                    "https://www.linkedin.com/company/ais-utd",
+                    "_blank"
+                  )
+                }
                 aria-label="LinkedIn"
                 className="text-white hover:text-[#0A66C2] transition-colors duration-300"
               >
@@ -219,13 +250,13 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* click outside backdrop */}
+      {/* Click outside backdrop (below dropdown, above page) */}
       {open && (
         <button
           type="button"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/30 z-40"
+          className="md:hidden fixed inset-0 bg-black/30 z-[54]"
         />
       )}
     </header>
