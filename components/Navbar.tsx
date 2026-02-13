@@ -87,14 +87,14 @@ const Navbar = () => {
               </button>
             ))}
             {/* Sign In button for desktop */}
-            <Link href="/signin">
+            {/* <Link href="/signin">
               <button
                 className="rounded-full px-4 py-3 ml-4 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
                 style={{ fontFamily: "Street Flow NYC" }}
               >
                 Sign In
               </button>
-            </Link>
+            </Link> */}
           </div>
 
           <div className="flex items-center gap-4">
@@ -181,14 +181,14 @@ const Navbar = () => {
 
             {/* Socials for mobile */}
             {/* Sign In button for mobile */}
-            <Link href="/signin">
+            {/* <Link href="/signin">
               <button
                 className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
                 style={{ fontFamily: "Street Flow NYC" }}
               >
                 Sign In
               </button>
-            </Link>
+            </Link> */}
             <div className="pt-2 flex items-center gap-4 sm:hidden">
               <button
                 type="button"
