@@ -37,11 +37,11 @@ export default function Home() {
                 />
 
                <Image
-                src="/Home/hackAiLogoColor.webp"
+                src="/Home/hackAiLogo.svg"
                 alt="hackAi Logo"
-                width={900}
-                height={900}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+                width={1150}
+                height={1150}
+                className="absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
                 />
 
                 
@@ -96,40 +96,39 @@ export default function Home() {
                     </button>
                 </div>  
 
-                 <div
-                        className="
-                            absolute z-30
-                            right-3 bottom-4
-                            w-[150px]
-                            sm:right-6 sm:bottom-6 sm:w-[190px]
-                            md:right-10 md:bottom-10 md:w-[260px]
-                            lg:w-[300px]
-                            pointer-events-none
-                        "
+                 <div className="
+                        absolute z-30
+                        right-3 bottom-4
+                        w-[150px]
+                        sm:right-6 sm:bottom-6 sm:w-[190px]
+                        md:right-10 md:bottom-10 md:w-[260px]
+                        lg:w-[300px]
+                        pointer-events-none
+                    "
+                    >
+                    <div className="relative w-full aspect-square rotate-[20deg] origin-center">
+                        <Image
+                        src="/Home/heart.svg"
+                        alt="Heart"
+                        fill
+                        className="object-contain"
+                        priority
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center px-5 sm:px-7 md:px-8 text-center">
+                        <p
+                            className="
+                            text-white
+                            text-sm sm:text-base md:text-xl lg:text-2xl
+                            leading-tight
+                            drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]
+                            "
+                            style={{ fontFamily: "Octin Spraypaint", WebkitTextStroke: "0.5px black" }}
                         >
-                        <div className="relative w-full aspect-square rotate-[20deg] origin-center">
-                            <Image
-                            src="/Home/heart.svg"
-                            alt="Heart"
-                            fill
-                            className="object-contain"
-                            priority
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center px-5 sm:px-7 md:px-8 text-center">
-                            <p
-                                className="
-                                text-white
-                                text-sm sm:text-base md:text-xl lg:text-2xl
-                                leading-tight
-                                drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]
-                                "
-                                style={{ fontFamily: "Octin Spraypaint"}}
-                            >
-                                Apps close on <span className="text-pink-300">Feb 24th</span>
-                            </p>
-                            </div>
+                            Apps close on <span className="text-pink-300">Feb 24th</span>
+                        </p>
                         </div>
-                    </div>       
+                        </div>
+                </div>       
             </div>
         </div>
       
