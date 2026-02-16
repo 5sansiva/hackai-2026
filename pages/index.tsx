@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
 import TracksPage from "./Tracks";
 import FAQSection from "@/components/FaqCards";
+import Countdown from "./countdown";
 import Donors from "./Donors";
 
 export default function HackAIPage() {
@@ -82,20 +83,34 @@ export default function HackAIPage() {
 
 
         <main className="relative pt-24">
-          <section id="home" className="min-h-screen flex items-center justify-center">
+          <section id="home" className="min-h-screen flex items-center justify-center -mt-20">
             <Home />
           </section>
           
-          <section id="about" className="min-h-screen flex items-center justify-center">
+          <section id="about" className="min-h-screen flex items-center justify-center m-4">
             <About />
           </section>
 
-            <section
-              id="stats"
-              className="min-h-screen flex items-center justify-center m-4"
-            >
-              <Stats />
-            </section>
+          <section
+              id="countdown"
+              className="min-h-screen flex items-center justify-center m-2"
+          >
+            <Countdown
+              leftGraffitiSrc="/Countdown/bunny.svg"
+              rightGraffitiSrc="/Countdown/target.svg"
+              frameSrc="/Countdown/countdownBg.svg"
+            />
+
+          </section>
+           
+          <section
+            id="stats"
+            className="min-h-screen flex items-center justify-center m-2"
+          >
+            <Stats />
+          </section>
+
+            
 
             {/* <section
               id="tracks"
@@ -106,14 +121,14 @@ export default function HackAIPage() {
 
             <section
               id="donors"
-              className="min-h-screen flex items-center justify-center m-4"
+              className="min-h-screen flex items-center justify-center m-2"
             >
               <Donors />
             </section>
 
             <section
               id="faqs"
-              className="min-h-screen flex items-center justify-center m-4"
+              className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
             </section>

@@ -9,7 +9,7 @@ export default function Home() {
                
                 <div
                     className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl leading-tight drop-shadow-[0_3px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
-                    style={{ fontFamily: "Street Flow NYC" }}
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "1px black" }}
                 >
                     Artificial Intelligence Society Presents
                 </div>
@@ -47,7 +47,7 @@ export default function Home() {
                 
                 <div
                     className="absolute left-1/2 top-[66%] -translate-x-1/2 z-30 text-center text-white text-2xl md:text-4xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest mt-12"
-                    style={{ fontFamily: "Street Flow NYC" }}
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
                     >
                         March 7-8, 2026
                 </div>
