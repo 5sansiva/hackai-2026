@@ -48,24 +48,34 @@ function EventTypeIcon({ tag, className = "h-3.5 w-3.5" }: { tag: EventType; cla
 export default function ScheduleSection() {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<EventType | null>(null);
 
   useEffect(() => {
     const unsub = onSnapshot(
       collection(db, "schedule"),
       (snap) => {
+        console.log("Project ID from client:", (db as { _app?: { options?: { projectId?: string } } })?._app?.options?.projectId);
+        console.log("Schedule snapshot size:", snap.size);
+        console.log("First schedule doc:", snap.docs[0]?.data());
+
+        setError(null);
+        const validTags: EventType[] = ["MANDATORY", "FOOD", "FUN", "WORKSHOP", "SUPPORT"];
         const rows = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
-          // Support both naming conventions: location/room, tag/eventType
+          // Support both naming conventions: location/room, tag/eventType (Firestore may use lowercase)
           const location = String(data.location ?? data.room ?? "");
-          const tag = (data.tag ?? data.eventType) as EventType | undefined;
+          const rawTag = String(data.tag ?? data.eventType ?? "").toUpperCase() as EventType;
+          const tag: EventType = validTags.includes(rawTag) ? rawTag : "WORKSHOP";
+          const rawDay = (data.day as string) ?? "saturday";
+          const day = rawDay === "sunday" ? "sunday" : "saturday";
           return {
             id: d.id,
             name: String(data.name ?? ""),
             location,
             time: String(data.time ?? ""),
-            tag: tag && ["MANDATORY", "FOOD", "#FUN", "WORKSHOP", "SUPPORT"].includes(tag) ? tag : "WORKSHOP",
-            day: (data.day as "saturday" | "sunday") ?? "saturday",
+            tag,
+            day,
             order: Number(data.order ?? 0),
           };
         });
@@ -73,9 +83,8 @@ export default function ScheduleSection() {
         setLoading(false);
       },
       (err) => {
-        console.warn("Schedule snapshot (e.g. missing permissions):", err?.message);
-        // Show empty schedule instead of error so site works before Firebase is configured
-        setEvents([]);
+        console.error("Schedule snapshot error ❌", err);
+        setError(err?.message ?? "Failed to load schedule");
         setLoading(false);
       }
     );
@@ -103,6 +112,16 @@ export default function ScheduleSection() {
       <div className="w-full max-w-6xl py-24 px-4 md:px-6 flex justify-center">
         <div className="text-white tracking-widest uppercase" style={{ fontFamily: "Octin Spraypaint" }}>
           LOADING...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-6xl py-24 px-4 md:px-6 flex justify-center">
+        <div className="text-red-300 tracking-widest uppercase" style={{ fontFamily: "Octin Spraypaint" }}>
+          SCHEDULE ERROR: {error}
         </div>
       </div>
     );

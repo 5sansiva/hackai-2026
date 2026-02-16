@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Preloader from "@/components/Preloader";
 import TracksPage from "./Tracks";
 import ScheduleSection from "./schedule";
+import SponsorsSection from "./Sponsors";
 import FAQSection from "@/components/FaqCards";
 
 export default function HackAIPage() {
@@ -17,7 +18,7 @@ export default function HackAIPage() {
     <div className="relative">
       <Head> 
         <title>HackAI</title> 
-        <link rel="icon" type="image/png" href="/hackai-logo.png" /> 
+        <link rel="icon" type="image/svg+xml" href="/Home/hackAiLogo.svg" /> 
         <meta name="description" content="Welcome to HackAI: the biggest AI hackathon in North Texas!" /> 
       </Head>
 
@@ -104,13 +105,6 @@ export default function HackAIPage() {
               <ScheduleSection />
             </section>
 
-            {/* <section
-              id="tracks"
-              className="min-h-screen flex items-center justify-center m-6"
-            >
-              <TracksPage />
-            </section> */}
-
             <section
               id="faqs"
               className="min-h-screen flex items-center justify-center m-6"
@@ -119,6 +113,11 @@ export default function HackAIPage() {
             </section>
 
         </main>
+
+        {/* Sponsors: its own full-width block, visually separate from main content and footer */}
+        <section id="sponsors">
+          <SponsorsSection />
+        </section>
 
         <Footer />
       </div>
