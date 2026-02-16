@@ -9,7 +9,6 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
 
   const NAV = [
-    { label: "HOME", id: "home" },
     { label: "ABOUT", id: "about" },
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
@@ -67,11 +66,11 @@ const Navbar = () => {
                 scrollToId("home");
                 setOpen(false);
               }}
-              className="relative h-10 w-24"
+              className="relative h-10 w-24 cursor-pointer"
               aria-label="Go to home"
             >
               <Image
-                src="/Home/hackAiLogo.svg"
+                src="/Home/hackAiLogoColor.webp"
                 alt="HackAI"
                 fill
                 className="object-contain"
