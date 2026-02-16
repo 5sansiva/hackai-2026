@@ -9,7 +9,7 @@ export default function Home() {
                
                 <div
                     className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl leading-tight drop-shadow-[0_3px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
-                    style={{ fontFamily: "Street Flow NYC" }}
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "1px black" }}
                 >
                     Artificial Intelligence Society Presents
                 </div>
@@ -47,7 +47,7 @@ export default function Home() {
                 
                 <div
                     className="absolute left-1/2 top-[66%] -translate-x-1/2 z-30 text-center text-white text-2xl md:text-4xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest mt-12"
-                    style={{ fontFamily: "Street Flow NYC" }}
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
                     >
                         March 7-8, 2026
                 </div>
@@ -94,9 +94,42 @@ export default function Home() {
                     >
                         APPLY NOW!
                     </button>
-                </div>
+                </div>  
 
-                
+                 <div
+                        className="
+                            absolute z-30
+                            right-3 bottom-4
+                            w-[150px]
+                            sm:right-6 sm:bottom-6 sm:w-[190px]
+                            md:right-10 md:bottom-10 md:w-[260px]
+                            lg:w-[300px]
+                            pointer-events-none
+                        "
+                        >
+                        <div className="relative w-full aspect-square rotate-[20deg] origin-center">
+                            <Image
+                            src="/Home/heart.svg"
+                            alt="Heart"
+                            fill
+                            className="object-contain"
+                            priority
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center px-5 sm:px-7 md:px-8 text-center">
+                            <p
+                                className="
+                                text-white
+                                text-sm sm:text-base md:text-xl lg:text-2xl
+                                leading-tight
+                                drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]
+                                "
+                                style={{ fontFamily: "Octin Spraypaint"}}
+                            >
+                                Apps close on <span className="text-pink-300">Feb 24th</span>
+                            </p>
+                            </div>
+                        </div>
+                    </div>       
             </div>
         </div>
       

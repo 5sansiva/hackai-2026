@@ -9,7 +9,7 @@ const Stats = () => {
     <div className="w-full py-24 px-6 m-8">
       <h1
         style={{ fontFamily: "Street Flow NYC" }}
-        className="text-[#EBA274] text-6xl ml-8 pb-12"
+        className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12"
       >
         HACKAI 2025 had...
       </h1>
