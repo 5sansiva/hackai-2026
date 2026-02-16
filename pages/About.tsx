@@ -44,7 +44,7 @@ const About = () => {
           <div className={`${fadeBase} ${inView ? shown : hidden}`}>
             <h2
               className="text-white text-4xl md:text-5xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
-              style={{ fontFamily: "Street Flow NYC" }}
+              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
             >
               WHAT IS HACKAI?
             </h2>
@@ -74,7 +74,7 @@ const About = () => {
           >
             <h2
               className="text-white text-4xl md:text-5xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
-              style={{ fontFamily: "Street Flow NYC" }}
+              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
             >
               WHY SPONSOR HACKAI?
             </h2>

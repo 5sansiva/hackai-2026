@@ -49,7 +49,7 @@ export default function TracksPage() {
       <div className="relative mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-16">
         {/* Title */}
         <h1
-          className="text-center text-5xl sm:text-6xl md:text-7xl tracking-wide"
+          className="text-center text-4xl sm:text-5xl md:text-6xl tracking-wide"
           style={{ fontFamily: "var(--font-drip)" }} // <- your drip font variable
         >
           TRACKS

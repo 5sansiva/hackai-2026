@@ -11,6 +11,7 @@ const Navbar = () => {
   const NAV = [
     { label: "HOME", id: "home" },
     { label: "ABOUT", id: "about" },
+    { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
     { label: "DONORS", id: "donors" },
     { label: "FAQS", id: "faqs" },
@@ -90,7 +91,7 @@ const Navbar = () => {
                   setOpen(false);
                 }}
                 className="py-2 px-4 text-white cursor-pointer flex justify-center font-bold rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
-                style={{ fontFamily: "Street Flow NYC" }}
+                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "0.5px black" }}
               >
                 {item.label}
               </button>
