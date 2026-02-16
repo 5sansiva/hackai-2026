@@ -156,17 +156,17 @@ const Navbar = () => {
             >
               <span className="relative block h-5 w-5">
                 <span
-                  className={`absolute left-0 top-1 block h-[2px] w-5 bg-current transition-transform duration-200 ${
+                  className={`absolute left-0 top-1 block h-0.5 w-5 bg-current transition-transform duration-200 ${
                     open ? "translate-y-2 rotate-45" : ""
                   }`}
                 />
                 <span
-                  className={`absolute left-0 top-2.5 block h-[2px] w-5 bg-current transition-opacity duration-200 ${
+                  className={`absolute left-0 top-2.5 block h-0.5 w-5 bg-current transition-opacity duration-200 ${
                     open ? "opacity-0" : "opacity-100"
                   }`}
                 />
                 <span
-                  className={`absolute left-0 top-4 block h-[2px] w-5 bg-current transition-transform duration-200 ${
+                  className={`absolute left-0 top-4 block h-0.5 w-5 bg-current transition-transform duration-200 ${
                     open ? "-translate-y-2 -rotate-45" : ""
                   }`}
                 />
@@ -177,7 +177,7 @@ const Navbar = () => {
       </nav>
 
       {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
-      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
+      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-55">
         <div
           className={`mt-3 overflow-hidden rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
             open
@@ -257,7 +257,7 @@ const Navbar = () => {
           type="button"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/30 z-[54]"
+          className="md:hidden fixed inset-0 bg-black/30 z-54"
         />
       )}
     </header>
