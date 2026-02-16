@@ -131,10 +131,10 @@ export default function FAQSection() {
                 <span className="text-white/90 tracking-widest uppercase" style={{ fontFamily: "Octin Spraypaint" }}>
                   {f.question}
                 </span>
-                <span className={`h-0 w-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-[#5aa9ff] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                <span className={`h-0 w-0 border-l-10 border-l-transparent border-r-10 border-r-transparent border-t-10 border-t-[#5aa9ff] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
               </button>
 
-              <div className={`${isOpen ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"} overflow-hidden transition-[max-height,opacity] duration-200`}>
+              <div className={`${isOpen ? "max-h-200 opacity-100" : "max-h-0 opacity-0"} overflow-hidden transition-[max-height,opacity] duration-200`}>
                 <div className="mt-3 rounded-xl border border-white/10 bg-black/25 px-5 py-4 flex flex-col">
                   <p className="text-white/85 leading-relaxed" style={{ fontFamily: "Octin Spraypaint" }}>
                     {renderAnswerWithInlineLinks(f.answer)}
