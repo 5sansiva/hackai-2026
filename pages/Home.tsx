@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import SprayLogo from '@/components/SprayCanvasOverlay';
 
 export default function Home() {
     return (
@@ -36,13 +37,12 @@ export default function Home() {
                 priority
                 />
 
-               <Image
-                src="/Home/hackAiLogo.svg"
-                alt="hackAi Logo"
-                width={1150}
-                height={1150}
-                className="absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
-                />
+               
+
+                <SprayLogo yOffsetPx={250} />
+
+
+
 
                 
                 <div
