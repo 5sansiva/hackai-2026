@@ -37,11 +37,11 @@ export default function Home() {
                 />
 
                <Image
-                src="/Home/hackAiLogo.svg"
+                src="/Home/hackAiLogoWhite.png"
                 alt="hackAi Logo"
-                width={1150}
-                height={1150}
-                className="absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+                width={1000}
+                height={1000}
+                className="absolute left-[50%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
                 />
 
                 
