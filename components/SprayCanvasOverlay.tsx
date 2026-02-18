@@ -3,35 +3,34 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 
-type SprayLogoProps = {
-  wrapperClassName?: string;
-  logoSrc?: string;
-  width?: number;
-  height?: number;
-  defaultColor?: string;
-  yOffsetPx?: number; // move logo down without breaking transforms
+type Props = {
+  /** Positioning of the whole hero art block (same as where your fill images live) */
+  className?: string;
+
+  /** Spray settings */
+  defaultColor?: string; // hex
+  maskToLogoOnly?: boolean; // true = only paint visible on hackAiLogo
 };
 
 function hexToRgb(hex: string) {
   const clean = hex.replace("#", "").trim();
-  const full =
-    clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
   const n = parseInt(full, 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
-export default function SprayLogo({
-  wrapperClassName = "absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20",
-  logoSrc = "/Home/hackAiLogo.svg",
-  width = 1150,
-  height = 1150,
+export default function SprayHeroGroup({
+  className = "absolute inset-0 z-20",
   defaultColor = "#ff4fd8",
-  yOffsetPx = 0,
-}: SprayLogoProps) {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+  maskToLogoOnly = true,
+}: Props) {
+  const groupRef = useRef<HTMLDivElement | null>(null);
+
+  // paint canvas (visible)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
 
+  // offscreen mask canvas + logo image (for masking spray to logo)
   const maskCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const maskCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const logoImgRef = useRef<HTMLImageElement | null>(null);
@@ -42,41 +41,28 @@ export default function SprayLogo({
 
   const rgb = useMemo(() => hexToRgb(color), [color]);
 
-  // Stronger spray settings
+  // Strong spray feel
   const radius = 20;
-  const density = 42;
+  const density = 44;
   const step = 2.2;
 
+  // Load the logo as an Image for masking (same-origin public asset)
   useEffect(() => {
     const img = new window.Image();
-    img.src = logoSrc;
+    img.src = "/Home/hackAiLogo.svg";
     img.onload = () => {
       logoImgRef.current = img;
       paintMask();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [logoSrc]);
-
-  const paintMask = () => {
-    const mctx = maskCtxRef.current;
-    const m = maskCanvasRef.current;
-    const img = logoImgRef.current;
-    if (!mctx || !m || !img) return;
-
-    mctx.clearRect(0, 0, m.width, m.height);
-
-    const w = wrapRef.current?.getBoundingClientRect().width ?? width;
-    const h = wrapRef.current?.getBoundingClientRect().height ?? height;
-
-    mctx.drawImage(img, 0, 0, w, h);
-  };
+  }, []);
 
   const sizeCanvases = () => {
-    const wrap = wrapRef.current;
+    const group = groupRef.current;
     const canvas = canvasRef.current;
-    if (!wrap || !canvas) return;
+    if (!group || !canvas) return;
 
-    const rect = wrap.getBoundingClientRect();
+    const rect = group.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
 
     canvas.width = Math.max(1, Math.round(rect.width * dpr));
@@ -104,13 +90,44 @@ export default function SprayLogo({
     paintMask();
   };
 
+  /**
+   * Draw the logo into the mask canvas in the SAME position it appears in the group.
+   * We position the logo exactly like your original: absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2, with fixed w/h 1150.
+   * If you later change logo positioning, update this draw logic to match.
+   */
+  const paintMask = () => {
+    const group = groupRef.current;
+    const mctx = maskCtxRef.current;
+    const m = maskCanvasRef.current;
+    const logoImg = logoImgRef.current;
+    if (!group || !mctx || !m || !logoImg) return;
+
+    const rect = group.getBoundingClientRect();
+
+    // Clear mask
+    mctx.clearRect(0, 0, rect.width, rect.height);
+
+    // Compute logo draw box in GROUP-local coordinates:
+    const logoW = 1150;
+    const logoH = 1150;
+
+    // left-[55%] and top-1/2 with translate -1/2, -1/2
+    const centerX = rect.width * 0.55;
+    const centerY = rect.height * 0.5;
+
+    const x = centerX - logoW / 2;
+    const y = centerY - logoH / 2;
+
+    mctx.drawImage(logoImg, x, y, logoW, logoH);
+  };
+
   useEffect(() => {
     sizeCanvases();
-    const wrap = wrapRef.current;
-    if (!wrap) return;
+    const group = groupRef.current;
+    if (!group) return;
 
     const ro = new ResizeObserver(sizeCanvases);
-    ro.observe(wrap);
+    ro.observe(group);
 
     window.addEventListener("resize", sizeCanvases);
     return () => {
@@ -121,18 +138,20 @@ export default function SprayLogo({
   }, []);
 
   const localPoint = (e: React.PointerEvent) => {
-    const rect = wrapRef.current!.getBoundingClientRect();
+    const rect = groupRef.current!.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
   const applyMask = () => {
+    if (!maskToLogoOnly) return;
+
     const ctx = ctxRef.current;
     const mask = maskCanvasRef.current;
-    const wrap = wrapRef.current;
-    if (!ctx || !mask || !wrap) return;
+    const group = groupRef.current;
+    if (!ctx || !mask || !group) return;
 
-    const w = wrap.getBoundingClientRect().width;
-    const h = wrap.getBoundingClientRect().height;
+    const w = group.getBoundingClientRect().width;
+    const h = group.getBoundingClientRect().height;
 
     ctx.save();
     ctx.globalCompositeOperation = "destination-in";
@@ -188,10 +207,8 @@ export default function SprayLogo({
   const onMove = (e: React.PointerEvent) => {
     if (!hover) return;
     const p = localPoint(e);
-
     if (last.current) sprayLine(last.current, p);
     else sprayAt(p.x, p.y);
-
     last.current = p;
   };
 
@@ -204,22 +221,62 @@ export default function SprayLogo({
 
   const swatches = ["#ffffff", "#ff4fd8", "#7c4dff", "#ffd84d", "#4df0ff", "#57ff7a"];
 
-  // ✅ Apply yOffset without touching transform:
-  // If wrapper uses top-1/2, we override top with calc(50% + yOffsetPx)
-  const wrapperStyle: React.CSSProperties =
-    wrapperClassName.includes("top-1/2")
-      ? { top: `calc(50% + ${yOffsetPx}px)` }
-      : { marginTop: yOffsetPx };
-
   return (
-    <div className={wrapperClassName} style={wrapperStyle}>
-      {/* Controls */}
-      <div className="absolute -left-14 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-3">
+    <div
+      ref={groupRef}
+      className={`${className} pointer-events-auto`}
+      onPointerEnter={onEnter}
+      onPointerLeave={onLeave}
+      onPointerMove={onMove}
+    >
+      {/* OUTER GRAFFITI */}
+      <Image
+        src="/Home/graffitti.svg"
+        alt="Graffitti outer"
+        fill
+        className="object-contain"
+        priority
+      />
+
+      {/* INNER SPLATTERS */}
+      <Image
+        src="/Home/splatters.svg"
+        alt="Graffitti inner"
+        fill
+        className="object-contain pointer-events-none"
+        style={{
+          transform:
+            "translateX(clamp(-160px, -8vw, -20px)) translateY(clamp(6px, 1vw, 18px))",
+          transformOrigin: "center",
+        }}
+        priority
+      />
+
+      {/* LOGO (same spot as before) */}
+      <Image
+        src="/Home/hackAiLogo.svg"
+        alt="hackAi Logo"
+        width={1150}
+        height={1150}
+        className="absolute left-[55%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none select-none"
+        priority
+        draggable={false}
+      />
+
+      {/* CANVAS OVERLAY (paint only shows on logo if maskToLogoOnly=true) */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 z-30 pointer-events-none"
+        style={{ mixBlendMode: "normal" }}
+      />
+
+      {/* CONTROLS (on sides, above apply button) */}
+      <div className="absolute left-6 bottom-[18%] z-40 flex flex-col gap-3">
         <input
           type="color"
           value={color}
           onChange={(e) => setColor(e.target.value)}
-          className="h-10 w-10 cursor-pointer rounded-md border border-white/30 bg-transparent p-0"
+          className="h-10 w-10 cursor-pointer rounded-md border border-white/30 bg-black/30 p-0"
           title="Spray color"
         />
         <button
@@ -230,7 +287,7 @@ export default function SprayLogo({
         </button>
       </div>
 
-      <div className="absolute -right-14 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+      <div className="absolute right-6 bottom-[18%] z-40 flex flex-col gap-2">
         {swatches.map((c) => (
           <button
             key={c}
@@ -240,32 +297,6 @@ export default function SprayLogo({
             title={c}
           />
         ))}
-      </div>
-
-      {/* Paint area */}
-      <div
-        ref={wrapRef}
-        className="relative"
-        style={{ width, height }}
-        onPointerEnter={onEnter}
-        onPointerLeave={onLeave}
-        onPointerMove={onMove}
-      >
-        <Image
-          src={logoSrc}
-          alt="hackAi Logo"
-          width={width}
-          height={height}
-          priority
-          className="pointer-events-none select-none"
-          draggable={false}
-        />
-
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 pointer-events-none"
-          style={{ mixBlendMode: "normal" }}
-        />
       </div>
     </div>
   );
