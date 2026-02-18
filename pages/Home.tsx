@@ -4,7 +4,7 @@ import Image from 'next/image';
 export default function Home() {
     return (
         <div className="flex items-center w-full justify-center h-full">
-            <div className="relative w-full max-w-[1600px] h-[90vh] max-h-[900px]">
+            <div className="relative w-full max-w-400 h-[90vh] max-h-225">
                 
                
                 <div
@@ -74,22 +74,7 @@ export default function Home() {
                     <button
                         type="button"
                         onClick={() => window.open("https://coda.io/form/Hack-AI-2026_dlNfpT9nhkE", "_blank")}
-                        className="
-                        relative isolate inline-flex items-center justify-center
-                        px-6 py-2.5 md:px-7 md:py-3 rounded-full
-                        bg-[#043335] text-[#b7d3df] text-base md:text-xl tracking-widest
-                        ring-5 ring-black
-                        shadow-[inset_0_0_0_3.5px_rgba(255,255,255,0.08),0_7px_0_0_rgba(0,0,0,0.55)]
-                        transform-gpu will-change-transform
-                        transition-transform duration-75 ease-out
-                        hover:-translate-y-0.5 active:translate-y-0
-
-                        after:content-[''] after:absolute after:inset-[-8px] after:-z-10 after:rounded-full
-                        after:opacity-0 hover:after:opacity-100
-                        after:transition-opacity after:duration-75 after:ease-linear
-                        after:bg-[radial-gradient(circle,rgba(91,227,255,0.55),transparent_60%)]
-                    "
-
+                        className="apply-now-animated"
                         style={{ fontFamily: "Octin Spraypaint" }}
                     >
                         APPLY NOW!
@@ -99,14 +84,14 @@ export default function Home() {
                  <div className="
                         absolute z-30
                         right-3 bottom-4
-                        w-[150px]
-                        sm:right-6 sm:bottom-6 sm:w-[190px]
-                        md:right-10 md:bottom-10 md:w-[260px]
-                        lg:w-[300px]
+                        w-37.5
+                        sm:right-6 sm:bottom-6 sm:w-47.5
+                        md:right-10 md:bottom-10 md:w-65
+                        lg:w-75
                         pointer-events-none
                     "
                     >
-                    <div className="relative w-full aspect-square rotate-[20deg] origin-center">
+                    <div className="relative w-full aspect-square rotate-20 origin-center">
                         <Image
                         src="/Home/heart.svg"
                         alt="Heart"

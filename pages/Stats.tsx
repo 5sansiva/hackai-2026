@@ -38,7 +38,7 @@ const Stats = () => {
             alt="Bear Mascot"
             width={420}
             height={320}
-            className="w-[260px]"
+            className="w-65"
             priority
           />
         </div>
@@ -48,17 +48,17 @@ const Stats = () => {
 
       {/* ✅ Desktop layout (your existing scene) */}
       <div className="hidden md:block">
-        <div className="relative mx-auto mt-12 w-full max-w-6xl h-[520px] sm:h-[580px] md:h-[640px]">
+        <div className="relative mx-auto mt-12 w-full max-w-6xl h-130 sm:h-145 md:h-160">
           <Image
             src="/Stats/bear.svg"
             alt="Bear Mascot"
             width={600}
             height={400}
-            className="absolute left-1/2 top-1/2 w-[300px] sm:w-[360px] md:w-[440px] lg:w-[520px] -translate-x-1/2 -translate-y-1/2"
+            className="absolute left-1/2 top-1/2 w-75 sm:w-90 md:w-110 lg:w-130 -translate-x-1/2 -translate-y-1/2"
             priority
           />
 
-          <div className="absolute left-[10%] top-[-12%] w-[260px] sm:w-[320px] md:w-[380px]">
+          <div className="absolute left-[10%] top-[-12%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
                 src="/Stats/hackCount.svg"
@@ -77,7 +77,7 @@ const Stats = () => {
             </div>
           </div>
 
-          <div className="absolute right-[4%] top-[-20%] w-[260px] sm:w-[320px] md:w-[380px]">
+          <div className="absolute right-[4%] top-[-20%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
                 src="/Stats/prizeM.svg"
@@ -96,7 +96,7 @@ const Stats = () => {
             </div>
           </div>
 
-          <div className="absolute left-[20%] bottom-[-15%] w-[260px] sm:w-[320px] md:w-[380px]">
+          <div className="absolute left-[20%] bottom-[-15%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
                 src="/Stats/projCount.svg"
