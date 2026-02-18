@@ -73,10 +73,10 @@ export default function CountdownHero({
           src={leftGraffitiSrc}
           alt=""
           className={[
-            "pointer-events-none absolute z-[5] opacity-90",
-            "left-1 top-3 w-[64px]", // phones
-            "sm:left-3 sm:top-8 sm:w-[120px]",
-            "md:left-8 md:top-16 md:w-[220px]",
+            "pointer-events-none absolute z-5 opacity-90",
+            "left-1 top-3 w-16", // phones
+            "sm:left-3 sm:top-8 sm:w-30",
+            "md:left-8 md:top-16 md:w-55",
           ].join(" ")}
           draggable={false}
         />
@@ -87,10 +87,10 @@ export default function CountdownHero({
           src={rightGraffitiSrc}
           alt=""
           className={[
-            "pointer-events-none absolute z-[5] opacity-90",
-            "right-1 top-1 w-[72px]", // phones
-            "sm:right-3 sm:top-4 sm:w-[140px]",
-            "md:right-8 md:top-8 md:w-[260px]",
+            "pointer-events-none absolute z-5 opacity-90",
+            "right-1 top-1 w-18", // phones
+            "sm:right-3 sm:top-4 sm:w-35",
+            "md:right-8 md:top-8 md:w-65",
           ].join(" ")}
           draggable={false}
         />
@@ -121,7 +121,7 @@ export default function CountdownHero({
             draggable={false}
           />
 
-          <div className="relative w-full px-[34px] py-[28px] md:px-[62px] md:py-[44px]">
+          <div className="relative w-full px-8.5 py-7 md:px-15.5 md:py-11">
             <div className="flex items-end justify-center gap-8 md:gap-10">
               <Block value={safeDays} label="days" />
               <DotColon />
@@ -189,7 +189,7 @@ function DotColon() {
 
 function Block({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center w-[140px] sm:w-[150px] md:w-[190px]">
+    <div className="flex flex-col items-center w-35 sm:w-37.5 md:w-47.5">
       <div className="relative">
         <div
           className="glitch leading-none text-[72px] sm:text-[88px] md:text-[112px] text-white"

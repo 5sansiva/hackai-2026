@@ -90,7 +90,7 @@ const Navbar = () => {
                   setOpen(false);
                 }}
                 className="py-2 px-4 text-white cursor-pointer flex justify-center font-bold rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
-                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "0.5px black" }}
+                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "0.05px black" }}
               >
                 {item.label}
               </button>
