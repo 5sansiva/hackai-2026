@@ -37,7 +37,7 @@ const About = () => {
     <section ref={sectionRef} className="w-full py-24 px-6">
       {/* Placeholder to avoid layout jump */}
       {!shouldRender ? (
-        <div className="mx-auto max-w-6xl h-[520px] md:h-[420px]" />
+        <div className="mx-auto max-w-6xl h-130 md:h-105" />
       ) : (
         <div className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-16">
           {/* LEFT */}

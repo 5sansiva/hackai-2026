@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/firebase/clientApp"; // adjust import to your path
+import Image from "next/image";
 
 type Donor = {
   id: string;
@@ -75,12 +76,23 @@ const Donors = () => {
                     hover:shadow-[0_0_22px_rgba(91,227,255,0.25)]
                 "
                 >
-                <img
+                {d.image?.startsWith("http") ? (
+                  <img
                     src={d.image}
                     alt="Donor"
                     className="max-h-12 md:max-h-14 max-w-[70%] object-contain"
                     loading="lazy"
-                />
+                  />
+                ) : (
+                  <Image
+                    src={d.image}
+                    alt="Donor"
+                    width={160}
+                    height={56}
+                    className="max-h-12 md:max-h-14 max-w-[70%] object-contain"
+                    loading="lazy"
+                  />
+                )}
                 </a>
             ))}
             </div>
