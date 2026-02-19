@@ -5,14 +5,12 @@ import About from "./About";
 import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Preloader from "@/components/Preloader";
 import TracksPage from "./Tracks";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
 
 export default function HackAIPage() {
-  const [loading, setLoading] = useState(true);
 
   return (
     <div className="relative">
@@ -23,16 +21,23 @@ export default function HackAIPage() {
       </Head>
 
       {/* Background always visible so the lighting has something to reveal */}
-      <div
-        className="fixed inset-0 -z-10"
-        style={{
-          backgroundColor: "black",
-          backgroundImage: "url(/mainbg.svg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
+      <div className="fixed inset-0 -z-10 bg-black">
+        <img
+          src="/mainbg.svg"
+          alt="Main background"
+          style={{
+            width: '100vw',
+            height: '100vh',
+            objectFit: 'cover',
+            objectPosition: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            zIndex: -10,
+          }}
+          loading="eager"
+        />
+      </div>
       
       {/* Desktop MLH (not fixed) */}
         <div className="hidden md:block relative">
@@ -52,7 +57,6 @@ export default function HackAIPage() {
         </div>
 
 
-      {loading && <Preloader onDone={() => setLoading(false)} />}
 
 
       {/* Rest of the content */}
@@ -61,13 +65,13 @@ export default function HackAIPage() {
         
 
         {/* Mobile MLH spacer (reserves vertical space below fixed navbar) */}
-        <div className="md:hidden h-[88px]" />
+        <div className="md:hidden h-22" />
 
         {/* Mobile MLH badge (not fixed) */}
-        <div className="md:hidden w-full flex justify-end pr-4 -mt-[88px] pt-4 pb-2">
+        <div className="md:hidden w-full flex justify-end pr-4 -mt-22 pt-4 pb-2">
           <a
             id="mlh-trust-badge-mobile"
-            className="block w-[64px] sm:w-[72px]"
+            className="block w-16 sm:w-18"
             href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
             target="_blank"
             rel="noreferrer"

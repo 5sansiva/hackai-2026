@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import Image from 'next/image';
 
 export default function Home() {
+    // Callback to notify preloader when main image is loaded
+    const handleMainImageLoad = useCallback(() => {
+        
+    }, []);
+
     return (
         <div className="flex items-center w-full justify-center h-full">
             <div className="relative w-full max-w-400 h-[90vh] max-h-225">
@@ -21,6 +26,7 @@ export default function Home() {
                 fill
                 className="object-contain"
                 priority
+                onLoadingComplete={handleMainImageLoad}
                 />
 
                 
@@ -37,11 +43,12 @@ export default function Home() {
                 />
 
                <Image
-                src="/Home/hackAiLogoWhite.png"
+                src="/Home/hackAiLogoWhite.svg"
                 alt="hackAi Logo"
                 width={1000}
                 height={1000}
                 className="absolute left-[50%] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none"
+                priority
                 />
 
                 

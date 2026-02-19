@@ -79,7 +79,7 @@ const Footer = ({
             <div className="font-bold text-lg mb-2 md:ml-8 ml-4">Follow our Newsletter</div>
               <form className="flex flex-col gap-2 md:ml-8 ml-4" style={{ fontFamily: 'Octin Spraypaint' }}>
                 <input type="email" placeholder="Email" className="rounded px-3 py-2 border border-white/30 bg-transparent text-white/90 tracking-widest uppercase focus:outline-none focus:border-[#A32A2A] transition-colors" style={{ fontFamily: 'Octin Spraypaint' }} />
-                <button type="submit" className="bg-[#A32A2A] text-white rounded px-3 py-2 font-semibold text-white/90 tracking-widest uppercase" style={{ fontFamily: 'Octin Spraypaint' }}>Subscribe</button>
+                <button type="submit" className="bg-[#A32A2A] rounded px-3 py-2 font-semibold text-white/90 tracking-widest uppercase" style={{ fontFamily: 'Octin Spraypaint' }}>Subscribe</button>
               </form>
           </div>
           

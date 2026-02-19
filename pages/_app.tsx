@@ -18,29 +18,33 @@ const streetFlow = localFont({
   display: "swap",
 });
 
+
 export default function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => router.pathname === '/');
+
+  // Set the callback before first render
+  if (typeof window !== 'undefined') {
+  }
 
   useEffect(() => {
-    // Only show preloader on home page
-    if (router.pathname === '/') {
-      setLoading(true);
-      // Simulate preloader duration
-      const timer = setTimeout(() => setLoading(false), 4000);
-      return () => clearTimeout(timer);
-    } else {
+    if (router.pathname !== '/') {
       setLoading(false);
     }
+    // Clean up on unmount
+    return () => {
+      if (typeof window !== 'undefined') {
+      }
+    };
   }, [router.pathname]);
 
   return (
     <div className={`${octin.variable} ${streetFlow.variable}`}>
-      {loading && router.pathname === '/' ? (
-        <Preloader onDone={() => setLoading(false)} />
-      ) : (
+      {/* {loading && router.pathname === '/' ? (
+        <Preloader onDone={() => setLoading(false)} minDuration={800} />
+      ) : ( */}
         <Component {...pageProps} />
-      )}
+      {/* )} */}
     </div>
   );
 }
