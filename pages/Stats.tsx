@@ -8,8 +8,8 @@ const Stats = () => {
   return (
     <div className="w-full py-24 px-6 m-8">
       <h1
-        style={{ fontFamily: "Street Flow NYC" }}
         className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12"
+        style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black",paintOrder: "stroke" }}
       >
         HACKAI 2025 had...
       </h1>

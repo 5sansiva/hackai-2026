@@ -98,8 +98,8 @@ export default function CountdownHero({
 
       <div className="relative z-10 flex h-full w-full flex-col items-center justify-start sm:justify-center px-3 sm:px-4 pt-6 sm:pt-0">
         <h2
-          className="mb-4 sm:mb-6 md:mb-8 text-white text-4xl sm:text-5xl md:text-6xl font-extrabold drop-shadow-[0_4px_0_rgba(0,0,0,0.85)] tracking-wide"
-          style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "1px black" }}
+          className="mb-4 sm:mb-6 md:mb-8 text-white text-4xl sm:text-5xl md:text-6xl drop-shadow-[0_4px_0_rgba(0,0,0,0.85)] tracking-wide"
+          style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black", paintOrder: "stroke" }}
         >
           {title}
         </h2>
@@ -137,8 +137,8 @@ export default function CountdownHero({
         <div className="relative mt-5 sm:mt-7 w-[min(980px,94vw)]">
           <div className="absolute right-0 top-0 flex items-center gap-2">
             <p
-              className="text-emerald-200 text-lg sm:text-xl md:text-3xl font-extrabold drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]"
-              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "1px black" }}
+              className="text-emerald-200 text-lg sm:text-xl md:text-3xl drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]"
+              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "3px black", paintOrder: "stroke" }}
             >
               {footerText}
             </p>

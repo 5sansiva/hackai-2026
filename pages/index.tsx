@@ -6,6 +6,7 @@ import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TracksPage from "./Tracks";
+import KeynoteSpeaker from "@/components/KeynoteSpeaker";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
@@ -135,8 +136,11 @@ export default function HackAIPage() {
               className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
-            </section>
 
+              
+            </section>
+            
+            <KeynoteSpeaker />
             
 
         </main>
