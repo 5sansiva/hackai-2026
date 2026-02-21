@@ -6,6 +6,7 @@ import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TracksPage from "./Tracks";
+import KeynoteSpeaker from "@/components/KeynoteSpeaker";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
@@ -91,17 +92,17 @@ export default function HackAIPage() {
             <Home />
           </section>
           
-          <section id="about" className="min-h-screen flex items-center justify-center m-4">
+          <section id="about" className="min-h-screen flex items-center justify-center">
             <About />
           </section>
 
           <section
               id="countdown"
-              className="min-h-screen flex items-center justify-center m-2"
+              className="min-h-screen flex items-center justify-center"
           >
             <Countdown
-              leftGraffitiSrc="/Countdown/bunny.svg"
-              rightGraffitiSrc="/Countdown/target.svg"
+              //leftGraffitiSrc="/Countdown/bunny.svg"
+              //rightGraffitiSrc="/Countdown/target.svg"
               frameSrc="/Countdown/countdownBg.svg"
             />
 
@@ -135,8 +136,14 @@ export default function HackAIPage() {
               className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
-            </section>
 
+              
+            </section>
+            <section
+              id="keynote"
+            >
+              <KeynoteSpeaker />
+            </section>
             
 
         </main>

@@ -111,8 +111,8 @@ export default function FAQSection() {
     <div className="w-full max-w-6xl py-24">
       <div className="flex justify-center">
         <h2
-          className="text-white text-5xl md:text-6xl tracking-widest uppercase"
-          style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
+          className="text-white text-5xl md:text-6xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
+          style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black", paintOrder: "stroke" }}
         >
           FAQS
         </h2>

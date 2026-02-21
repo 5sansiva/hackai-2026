@@ -34,7 +34,13 @@ const About = () => {
   const shown = "opacity-100 translate-y-0";
 
   return (
-    <section ref={sectionRef} className="w-full py-24 px-6">
+    <section ref={sectionRef} className="w-full py-24 px-6"
+              style={{
+                backgroundImage: "url('/About/bg.svg')",
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat"
+              }}>
       {/* Placeholder to avoid layout jump */}
       {!shouldRender ? (
         <div className="mx-auto max-w-6xl h-130 md:h-105" />
@@ -44,7 +50,7 @@ const About = () => {
           <div className={`${fadeBase} ${inView ? shown : hidden}`}>
             <h2
               className="text-white text-4xl md:text-5xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
-              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
+              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "5px black", paintOrder: "stroke" }}
             >
               WHAT IS HACKAI?
             </h2>
@@ -74,7 +80,7 @@ const About = () => {
           >
             <h2
               className="text-white text-4xl md:text-5xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
-              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
+              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "5px black", paintOrder: "stroke"}}
             >
               WHY SPONSOR HACKAI?
             </h2>
