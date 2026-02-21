@@ -92,17 +92,17 @@ export default function HackAIPage() {
             <Home />
           </section>
           
-          <section id="about" className="min-h-screen flex items-center justify-center m-4">
+          <section id="about" className="min-h-screen flex items-center justify-center">
             <About />
           </section>
 
           <section
               id="countdown"
-              className="min-h-screen flex items-center justify-center m-2"
+              className="min-h-screen flex items-center justify-center"
           >
             <Countdown
-              leftGraffitiSrc="/Countdown/bunny.svg"
-              rightGraffitiSrc="/Countdown/target.svg"
+              //leftGraffitiSrc="/Countdown/bunny.svg"
+              //rightGraffitiSrc="/Countdown/target.svg"
               frameSrc="/Countdown/countdownBg.svg"
             />
 

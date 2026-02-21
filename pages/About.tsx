@@ -34,7 +34,13 @@ const About = () => {
   const shown = "opacity-100 translate-y-0";
 
   return (
-    <section ref={sectionRef} className="w-full py-24 px-6">
+    <section ref={sectionRef} className="w-full py-24 px-6"
+              style={{
+                backgroundImage: "url('/About/bg.svg')",
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat"
+              }}>
       {/* Placeholder to avoid layout jump */}
       {!shouldRender ? (
         <div className="mx-auto max-w-6xl h-130 md:h-105" />
