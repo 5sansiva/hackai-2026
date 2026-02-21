@@ -139,8 +139,11 @@ export default function HackAIPage() {
 
               
             </section>
-            
-            <KeynoteSpeaker />
+            <section
+              id="keynote"
+            >
+              <KeynoteSpeaker />
+            </section>
             
 
         </main>
