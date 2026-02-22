@@ -86,13 +86,11 @@ if (!speaker) {
           left-0 
           top-1/4
           rotate-[-16deg] 
-          text-6xl 
-          sm:text-7xl 
-          md:text-8xl 
+          text-7xl 
+          sm:text-8xl 
+          md:text-9xl 
           pointer-events-none
-          min-w-48 
-          sm:w-60 
-          md:w-77 
+          min-w-80
           opacity-60"
         style={{color: "rgba(25,29,35,0.65)", 
           WebkitTextStrokeWidth: "14px",
@@ -110,9 +108,7 @@ if (!speaker) {
         text-7xl
         sm:text-8xl
         md:text-9xl
-        min-w-48
-        sm:w-60
-        md:w-77
+        min-w-80
         text-right
         "
         style={{
