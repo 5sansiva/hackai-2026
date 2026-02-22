@@ -3,9 +3,11 @@ import Head from "next/head";
 import Home from "./Home";
 import About from "./About";
 import Stats from "./Stats";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import dynamic from "next/dynamic";
+const Navbar = dynamic(() => import("@/components/Navbar"), { ssr: false });
+const Footer = dynamic(() => import("@/components/Footer"), { ssr: false });
 import TracksPage from "./Tracks";
+import KeynoteSpeaker from "@/components/KeynoteSpeaker";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
@@ -87,11 +89,11 @@ export default function HackAIPage() {
 
 
         <main className="relative pt-24">
-          <section id="home" className="min-h-screen flex items-center justify-center -mt-20">
+            <section id="home" className="min-h-screen flex items-center justify-center -mt-20">
             <Home />
           </section>
-          
-          <section id="about" className="min-h-screen flex items-center justify-center m-4">
+           
+          <section id="about" className="min-h-screen flex items-center justify-center">
             <About />
           </section>
 
@@ -114,15 +116,6 @@ export default function HackAIPage() {
             <Stats />
           </section>
 
-            
-
-            {/* <section
-              id="tracks"
-              className="min-h-screen flex items-center justify-center m-6"
-            >
-              <TracksPage />
-            </section> */}
-
             <section
               id="donors"
               className="min-h-screen flex items-center justify-center m-2"
@@ -131,13 +124,55 @@ export default function HackAIPage() {
             </section>
 
             <section
-              id="faqs"
-              className="min-h-screen flex items-center justify-center m-2"
+              className="relative w-full overflow-hidden"
+              style={{
+                backgroundImage: "url('/KeynoteSpeaker/bg-brick.png')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
             >
-              <FAQSection />
-            </section>
+              {/* graffiti layer */}
+              <div
+                className="absolute inset-0 z-0"
+                style={{
+                  backgroundImage: "url('/KeynoteSpeaker/bg-graffiti.png')",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }}
+              />
 
+              {/* light layer */}
+              <div
+                className="absolute inset-0 z-0"
+                style={{
+                  backgroundImage: "url('/KeynoteSpeaker/light.png')",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "center",
+                  backgroundSize: "cover",
+                }}
+              />
+
+              {/* tint */}
+              <div className="absolute inset-0 z-0 bg-black/5" />
+
+              {/* content on top */}
+              <div className="relative z-10">
+                <section id="keynote" className="relative w-full min-h-screen">
+                  <KeynoteSpeaker />
+                </section>
+
+                <section
+                  id="faqs"
+                  className="min-h-screen flex items-center justify-center m-2"
+                >
+                  <FAQSection />
+                </section>
+              </div>
+            </section>
             
+            
+             
 
         </main>
 
