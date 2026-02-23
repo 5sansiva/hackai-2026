@@ -26,7 +26,7 @@ export default function Home() {
                 fill
                 className="object-contain opacity-70"
                 priority
-                onLoadingComplete={handleMainImageLoad}
+                onLoad={handleMainImageLoad}
                 />
 
                 

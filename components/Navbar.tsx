@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
 import Image from "next/image";
@@ -13,8 +11,7 @@ const Navbar = () => {
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
     { label: "DONORS", id: "donors" },
-    { label: "FAQS", id: "faqs" },
-    { label: "KEYNOTE SPEAKER", id: "keynote"}
+    { label: "SPEAKER", id: "keynote" },
   ];
 
   const scrollToId = (id: string) => {
@@ -70,12 +67,10 @@ const Navbar = () => {
               className="relative h-10 w-24 cursor-pointer"
               aria-label="Go to home"
             >
-              <Image
+              <img
                 src="/Home/hackAiLogoColor.webp"
                 alt="HackAI"
-                fill
-                className="object-contain"
-                priority
+                className="object-contain w-full h-full"
               />
             </button>
           </div>
@@ -152,7 +147,7 @@ const Navbar = () => {
               onClick={() => setOpen((v) => !v)}
               aria-label="Open menu"
               aria-expanded={open}
-              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-white/90 hover:text-white relative z-60"
+              className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 border border-white/15 text-white/90 hover:text-white relative z-[60]"
             >
               <span className="relative block h-5 w-5">
                 <span
@@ -177,7 +172,7 @@ const Navbar = () => {
       </nav>
 
       {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
-      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-55">
+      <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
         <div
           className={`mt-3 overflow-hidden rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
             open
@@ -257,7 +252,7 @@ const Navbar = () => {
           type="button"
           aria-label="Close menu"
           onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/30 z-54"
+          className="md:hidden fixed inset-0 bg-black/30 z-[54]"
         />
       )}
     </header>
