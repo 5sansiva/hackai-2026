@@ -26,7 +26,7 @@ export default function Home() {
                 fill
                 className="object-contain"
                 priority
-                onLoadingComplete={handleMainImageLoad}
+                onLoad={handleMainImageLoad}
                 />
 
                 

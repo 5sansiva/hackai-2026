@@ -22,19 +22,10 @@ const streetFlow = localFont({
 export default function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
-  // Set the callback before first render
-  if (typeof window !== 'undefined') {
-  }
-
   useEffect(() => {
-    if (router.pathname !== '/') {
-      setLoading(false);
-    }
     // Clean up on unmount
     return () => {
-      if (typeof window !== 'undefined') {
-      }
+      setLoading(false);
     };
   }, [router.pathname]);
 

@@ -1,25 +1,18 @@
 import React from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import Home from "./Home";
+import About from "./About";
+import Stats from "./Stats";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
-const Home = dynamic(() => import("./Home"), { ssr: false });
-const About = dynamic(() => import("./About"), { ssr: false });
-const Stats = dynamic(() => import("./Stats"), { ssr: false });
-const Navbar = dynamic(() => import("@/components/Navbar"), { ssr: false });
-const Footer = dynamic(() => import("@/components/Footer"), { ssr: false });
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
 const KeynoteSpeaker = dynamic(() => import("@/components/KeynoteSpeaker"), { ssr: false });
 const FAQSection = dynamic(() => import("@/components/FaqCards"), { ssr: false });
 const Donors = dynamic(() => import("./Donors"), { ssr: false });
 
 export default function HackAIPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  // Server renders this minimal shell — no dynamic children, no conditionals
-  // Everything that differs between server/client is gated behind `mounted`
-  if (!mounted) {
   return (
     <div className="relative">
       <Head>
@@ -31,40 +24,34 @@ export default function HackAIPage() {
       {/* Navbar — ssr:false, renders only on client */}
       <Navbar />
 
-      {/* MLH badges — gated behind mounted to prevent hydration mismatch */}
-      {mounted && (
-        <>
-          <div className="hidden md:block fixed top-0 right-6 z-40">
-            <a
-              href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <img
-                src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
-                alt="Major League Hacking 2026 Hackathon Season"
-                className="w-[110px] h-auto"
-              />
-            </a>
-          </div>
-          <div className="md:hidden fixed top-16 right-4 z-40">
-            <a
-              href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <img
-                src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
-                alt="Major League Hacking 2026 Hackathon Season"
-                className="w-16 h-auto"
-              />
-            </a>
-          </div>
-        </>
-      )}
+      <div className="hidden md:block fixed top-0 right-6 z-40">
+        <a
+          href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <img
+            src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
+            alt="Major League Hacking 2026 Hackathon Season"
+            className="w-[110px] h-auto"
+          />
+        </a>
+      </div>
+      <div className="md:hidden fixed top-16 right-4 z-40">
+        <a
+          href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <img
+            src="https://s3.amazonaws.com/logged-assets/trust-badge/2026/mlh-trust-badge-2026-black.svg"
+            alt="Major League Hacking 2026 Hackathon Season"
+            className="w-16 h-auto"
+          />
+        </a>
+      </div>
 
-      {/* Main content — suppressHydrationWarning covers any minor attr diffs */}
-      <main className="relative" suppressHydrationWarning>
+      <main className="relative">
 
         {/* mainbg wrapper: Home → Donors */}
         <div
@@ -76,7 +63,7 @@ export default function HackAIPage() {
             backgroundColor: "black",
           }}
         >
-          <section id="home" className="min-h-screen flex items-center justify-center -mt-20">
+          <section id="home" className="min-h-screen flex items-center justify-center">
             <Home />
           </section>
 
@@ -151,15 +138,10 @@ export default function HackAIPage() {
 
       </main>
 
-      {/* Footer — gated behind mounted so server/client shell matches */}
-      {mounted ? (
-        <div style={{ backgroundColor: '#0a0a0f' }}>
-          <Footer />
-        </div>
-      ) : (
-        <div style={{ backgroundColor: '#0a0a0f', minHeight: '300px' }} />
-      )}
+      <div style={{ backgroundColor: '#0a0a0f' }}>
+        <Footer />
+      </div>
 
     </div>
-  );}
+  );
 }
