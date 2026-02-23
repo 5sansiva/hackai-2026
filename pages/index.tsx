@@ -132,6 +132,8 @@ export default function HackAIPage() {
             </section>
             <section id="faqs" className="min-h-screen flex items-center justify-center mb-2">
               <FAQSection />
+
+              
             </section>
           </div>
         </section>

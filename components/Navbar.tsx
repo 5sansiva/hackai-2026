@@ -55,7 +55,9 @@ const Navbar = () => {
         }}
       >
         <div className="flex items-center justify-between w-full">
+        <div className="flex items-center justify-between w-full">
           {/* Logo */}
+          <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             {/* Use scrollToId so it respects your offset */}
             <button
@@ -76,7 +78,7 @@ const Navbar = () => {
           </div>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-10">
+          <div className="hidden md:flex items-center gap-6">
             {NAV.map((item) => (
               <button
                 key={item.id}
@@ -85,8 +87,8 @@ const Navbar = () => {
                   scrollToId(item.id);
                   setOpen(false);
                 }}
-                className="py-2 px-4 text-white cursor-pointer flex justify-center font-bold rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
-                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "0.05px black" }}
+                className="py-2 text-white cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-[#783edc] tracking-widest"
+                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "3px black", paintOrder: "stroke" }}
               >
                 {item.label}
               </button>
@@ -103,9 +105,9 @@ const Navbar = () => {
             </Link> */}
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {/* Desktop socials */}
-            <div className="hidden sm:flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-4 px-4">
               <button
                 type="button"
                 onClick={() =>

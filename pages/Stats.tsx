@@ -8,8 +8,8 @@ const Stats = () => {
   return (
     <div className="w-full py-24 px-6 m-8">
       <h1
-        style={{ fontFamily: "Street Flow NYC" }}
-        className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12"
+        className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12 drop-shadow-[0_4px_0_rgba(0,0,0,0.85)]"
+        style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black",paintOrder: "stroke" }}
       >
         HACKAI 2025 had...
       </h1>
@@ -61,7 +61,7 @@ const Stats = () => {
           <div className="absolute left-[10%] top-[-12%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
-                src="/Stats/hackCount.svg"
+                src="/Stats/hackerCount.svg"
                 alt="Hackers Count"
                 width={400}
                 height={300}
@@ -69,10 +69,10 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC" }}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "200px", WebkitTextStroke: "5px black",paintOrder: "stroke" }}
                 className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
-                250+ Hackers
+                250+ hackers
               </h2>
             </div>
           </div>
@@ -80,7 +80,7 @@ const Stats = () => {
           <div className="absolute right-[4%] top-[-20%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
-                src="/Stats/prizeM.svg"
+                src="/Stats/prize.svg"
                 alt="Prize Money"
                 width={400}
                 height={300}
@@ -88,10 +88,10 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC" }}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", WebkitTextStroke: "5px black",paintOrder: "stroke"}}
                 className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
-                $3000 in prizes
+                $3000 <br/> in prizes
               </h2>
             </div>
           </div>
@@ -99,7 +99,7 @@ const Stats = () => {
           <div className="absolute left-[20%] bottom-[-15%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
-                src="/Stats/projCount.svg"
+                src="/Stats/projects.svg"
                 alt="Projects Count"
                 width={400}
                 height={300}
@@ -107,7 +107,7 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC" }}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "160px", WebkitTextStroke: "5px black",paintOrder: "stroke" }}
                 className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
                 50+ Projects

@@ -13,10 +13,10 @@ export default function Home() {
                 
                
                 <div
-                    className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl leading-tight drop-shadow-[0_3px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
-                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "1px black" }}
+                    className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "4px black", paintOrder: "stroke"}}
                 >
-                    Artificial Intelligence Society Presents
+                    Artificial Intelligence Society <br/> Presents
                 </div>
                 
 
@@ -24,7 +24,7 @@ export default function Home() {
                 src="/Home/graffitti.svg"
                 alt="Graffitti outer"
                 fill
-                className="object-contain"
+                className="object-contain opacity-70"
                 priority
                 onLoad={handleMainImageLoad}
                 />
@@ -54,7 +54,7 @@ export default function Home() {
                 
                 <div
                     className="absolute left-1/2 top-[66%] -translate-x-1/2 z-30 text-center text-white text-2xl md:text-4xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest mt-12"
-                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black" }}
+                    style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "5px black", paintOrder: "stroke" }}
                     >
                         March 7-8, 2026
                 </div>
@@ -82,7 +82,7 @@ export default function Home() {
                         type="button"
                         onClick={() => window.open("https://coda.io/form/Hack-AI-2026_dlNfpT9nhkE", "_blank")}
                         className="apply-now-animated"
-                        style={{ fontFamily: "Octin Spraypaint" }}
+                        style={{ fontSize: "16px", fontFamily: "Octin Spraypaint" }}
                     >
                         APPLY NOW!
                     </button>
@@ -114,7 +114,7 @@ export default function Home() {
                             leading-tight
                             drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]
                             "
-                            style={{ fontFamily: "Octin Spraypaint", WebkitTextStroke: "0.5px black" }}
+                            style={{ fontFamily: "Octin Spraypaint", WebkitTextStroke: "0.5px black", paintOrder: "stroke" }}
                         >
                             Apps close on <span className="text-pink-300">Feb 24th</span>
                         </p>

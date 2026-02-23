@@ -63,7 +63,13 @@ export default function CountdownHero({
   const safeSecs = pad2(secs);
 
   return (
-    <section className={`relative w-full overflow-hidden ${heightClassName}`}>
+    <section className={`relative w-full overflow-hidden ${heightClassName}`}
+    style={{
+      backgroundImage: "url('/Countdown/bg-graffiti.svg')",
+      backgroundSize: "contain",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat"
+    }}>
       {/* graffiti overlays */}
       {leftGraffitiSrc && (
         <img
