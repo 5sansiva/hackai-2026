@@ -97,42 +97,43 @@ export default function KeynoteSpeaker() {
 
   return (
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Content only (background comes from the wrapper in index.tsx) */}
       <div className="relative z-10 flex flex-col items-center text-center px-4 py-24 w-full">
-        {/* Title */}
-        <div className="relative inline-block mb-10">
-            <h2
-                style={{
-                color: "#000000",
-                fontFamily: "Street Flow NYC",
-                WebkitTextStrokeWidth: "5px",
-                WebkitTextStrokeColor: "white",
-                fontWeight: "400",
-                fontSize: "64px",
-                letterSpacing: "3.2px",
-                textAlign: "center",
-                paintOrder: "stroke",
-                }}
-            >
-                Keynote Speaker
-            </h2>
 
-            {/* Crown */}
-            
-
-            <img
+        {/* Title row: crown + text + exclamation all inline */}
+        <div className="flex flex-row items-center justify-center gap-4 mb-10">
+          {/* Crown */}
+          <img
             src="/KeynoteSpeaker/crown.png"
-            className="absolute top-[-30px] left-[-12px] w-10 sm:top-[-40px] sm:left-[-24px] sm:w-14 md:top-[-56px] md:left-[-40px] md:w-16"
-            />
+            className="w-16 sm:w-20 md:w-24 object-contain"
+            alt="crown"
+          />
 
-            {/* Exclamation */}
-            <img
+          {/* Title */}
+          <h2
+            style={{
+              color: "#000000",
+              fontFamily: "Street Flow NYC",
+              WebkitTextStrokeWidth: "5px",
+              WebkitTextStrokeColor: "white",
+              fontWeight: "400",
+              fontSize: "64px",
+              letterSpacing: "3.2px",
+              textAlign: "center",
+              paintOrder: "stroke",
+            }}
+          >
+            Keynote Speaker
+          </h2>
+
+          {/* Exclamation */}
+          <img
             src="/KeynoteSpeaker/exclamation.png"
-            className="absolute top-[-16px] right-[-12px] w-6 sm:top-[-32px] sm:right-[-24px] sm:w-8 md:top-[-40px] md:right-[-40px] md:w-10"
-            />
+            className="w-10 sm:w-12 md:w-16 object-contain"
+            alt="exclamation"
+          />
         </div>
 
-        {/* Image */}
+        {/* Speaker Image */}
         <div className="relative mb-8">
           <div className="w-[260px] h-[332px] md:w-[320px] md:h-[410px] rounded-full overflow-hidden border-4 border-blue-900 bg-white/10">
             {imgSrc ? (
@@ -163,7 +164,6 @@ export default function KeynoteSpeaker() {
             fontWeight: "400",
             letterSpacing: "2.4px",
             lineHeight: "normal",
-            
           }}
         >
           {speaker.name}

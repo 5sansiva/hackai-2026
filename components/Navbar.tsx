@@ -11,7 +11,7 @@ const Navbar = () => {
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
     { label: "DONORS", id: "donors" },
-    { label: "FAQS", id: "faqs" },
+    { label: "SPEAKER", id: "keynote" },
   ];
 
   const scrollToId = (id: string) => {
@@ -67,12 +67,10 @@ const Navbar = () => {
               className="relative h-10 w-24 cursor-pointer"
               aria-label="Go to home"
             >
-              <Image
+              <img
                 src="/Home/hackAiLogoColor.webp"
                 alt="HackAI"
-                fill
-                className="object-contain"
-                priority
+                className="object-contain w-full h-full"
               />
             </button>
           </div>

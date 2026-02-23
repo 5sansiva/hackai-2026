@@ -21,7 +21,7 @@ const streetFlow = localFont({
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(() => router.pathname === '/');
+  const [loading, setLoading] = useState(false);
 
   // Set the callback before first render
   if (typeof window !== 'undefined') {
