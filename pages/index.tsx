@@ -18,8 +18,9 @@ export default function HackAIPage() {
     <div className="relative">
       <Head> 
         <title>HackAI</title> 
-        <link rel="icon" type="image/svg+xml" href="/Home/hackAiLogo.svg" /> 
-        <meta name="description" content="Welcome to HackAI: the biggest AI hackathon in North Texas!" /> 
+        <link rel="icon" type="image/png" href="/hackai-logo.png" /> 
+        <meta name="description" content="Welcome to HackAI: the biggest AI hackathon in North Texas!" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
       {/* Background always visible so the lighting has something to reveal */}
@@ -108,8 +109,8 @@ export default function HackAIPage() {
               className="min-h-screen flex items-center justify-center"
           >
             <Countdown
-              //leftGraffitiSrc="/Countdown/bunny.svg"
-              //rightGraffitiSrc="/Countdown/target.svg"
+              /*leftGraffitiSrc="/Countdown/bunny.svg"
+              rightGraffitiSrc="/Countdown/target.svg" */
               frameSrc="/Countdown/countdownBg.svg"
             />
 
@@ -139,6 +140,16 @@ export default function HackAIPage() {
               className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
+
+              
+            </section>
+            <section
+              id="keynote"
+              
+            >
+              <KeynoteSpeaker />
+            </section>
+            
 
         </main>
 

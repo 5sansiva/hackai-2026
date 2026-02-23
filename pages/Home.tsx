@@ -24,7 +24,7 @@ export default function Home() {
                 src="/Home/graffitti.svg"
                 alt="Graffitti outer"
                 fill
-                className="object-contain"
+                className="object-contain opacity-70"
                 priority
                 onLoadingComplete={handleMainImageLoad}
                 />

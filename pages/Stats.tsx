@@ -8,7 +8,7 @@ const Stats = () => {
   return (
     <div className="w-full py-24 px-6 m-8">
       <h1
-        className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12"
+        className="text-[#EBA274] text-4xl md:text-5xl ml-8 pb-12 drop-shadow-[0_4px_0_rgba(0,0,0,0.85)]"
         style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black",paintOrder: "stroke" }}
       >
         HACKAI 2025 had...
@@ -69,7 +69,7 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "200px" }}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "200px", WebkitTextStroke: "5px black",paintOrder: "stroke" }}
                 className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
                 250+ hackers
@@ -88,7 +88,7 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC", fontSize: "56px"}}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", WebkitTextStroke: "5px black",paintOrder: "stroke"}}
                 className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
                 $3000 <br/> in prizes
@@ -107,7 +107,7 @@ const Stats = () => {
                 priority
               />
               <h2
-                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "160px" }}
+                style={{ fontFamily: "Street Flow NYC", fontSize: "56px", left: "160px", WebkitTextStroke: "5px black",paintOrder: "stroke" }}
                 className="absolute left-1/2 top-[60%] -translate-x-1/2 -translate-y-1/2 z-10 text-[#DDD059] text-2xl sm:text-3xl md:text-4xl text-center whitespace-nowrap"
               >
                 50+ Projects

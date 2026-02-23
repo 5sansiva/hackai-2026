@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/clientApp";
@@ -47,8 +45,10 @@ if (!speaker) {
 }
 
   return (
+    
     <section
-      className="relative w-full min-h-[720px] flex flex-col items-center justify-center text-center overflow-hidden"
+      className="relative w-full py-24 flex flex-col items-center text-center 
+      overflow-hidden"
       style={{
         backgroundImage: "url('/KeynoteSpeaker/bg-brick.png')",
         backgroundSize: "cover",
@@ -56,87 +56,117 @@ if (!speaker) {
       }}
     >
     
-    {/*bg graffiti with text*/}    
-    <div 
-    style={{backgroundImage: "url('/KeynoteSpeaker/bg-graffiti.svg')",
-            backgroundPosition: "center",
-    }}
-    className="absolute inset-0 h-full w-full overflow-hidden"
-    >
-
-        <h2 style={{color: "rgba(25,29,35,0.65)", textAlign: "left", WebkitTextStrokeWidth: "14px",
-                    WebkitTextStrokeColor: "rgba(152,152,152,0.30)", fontFamily: "Super Feel", fontSize: "157px",
-                    fontWeight: "400", paintOrder: "stroke", width: "735px",     // Moved to style
-            height: "308px",    // Moved to style
-            transform: "rotate(-16deg)", // Native CSS rotation
-            position: "absolute",
-            top: "140px"
+      {/*Graffiti Background*/}    
+      <div
+        className="absolute inset-0" 
+        style={{
+          backgroundImage: "url('/KeynoteSpeaker/bg-graffiti.svg')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
         }}
-        className="">
-            dig deep
+      />
 
-        </h2>
-
-        <h2 style={{color: "rgba(42,42,42,0.75)", textAlign: "right", WebkitTextStrokeWidth: "13px",
-                    WebkitTextStrokeColor: "#0A0A0A", fontFamily: "Super Feel", fontSize: "128px",
-                    fontWeight: "400",  width: "776px",     // Moved to style
-            height: "130px",    // Moved to style
-            position: "absolute",
-            bottom: "175px",
-            right: "20px"
-        }}
-        className="flex flex-col justify-right mt-10 w-194 h-23 text-right">
-            ai is cool
-
-        </h2>
-
-    {/*light overlay*/}
-    <div
-    style={{backgroundImage: "url('/KeynoteSpeaker/light.svg')",
-            backgroundPosition: "center"
-    }}
-    className="absolute inset-0">
-       
-        
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/4" />
 
-      
+      {/*light overlay*/}
+      <div
+      style={{
+        backgroundImage: "url('/KeynoteSpeaker/light.svg')",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover"
+      }}
+      className="absolute inset-0"
+      />
+
+      {/* background graffiti text */}
+      <h2 className="absolute 
+          left-0 
+          top-1/4
+          rotate-[-16deg] 
+          text-7xl 
+          sm:text-8xl 
+          md:text-9xl 
+          pointer-events-none
+          min-w-80
+          opacity-60"
+        style={{color: "rgba(25,29,35,0.65)", 
+          WebkitTextStrokeWidth: "14px",
+          WebkitTextStrokeColor: "rgba(152,152,152,0.30)", 
+          fontFamily: "Super Feel", 
+          paintOrder: "stroke", 
+        }}
+      >
+        dig deep
+      </h2>
+
+      <h2 className="absolute 
+        top-2/3
+        right-0
+        text-7xl
+        sm:text-8xl
+        md:text-9xl
+        min-w-80
+        text-right
+        "
+        style={{
+        color: "rgba(42,42,42,0.75)", 
+        textAlign: "right", 
+        WebkitTextStrokeWidth: "8px",
+        WebkitTextStrokeColor: "rgba(10,10,10, 0.6)", 
+        fontFamily: "Super Feel", 
+        fontWeight: "400"
+      }}
+        >
+        ai is cool
+      </h2>
+     
+     
       {/* Content wrapper */}
-      <div className="relative mt-10 z-10 flex flex-col items-center px-4">
-        
+      <div className="relative z-10 max-w-5xl w-full px-6 flex flex-col items-center gap-8">
+
         {/* Title */}
-        <div className="relative mt-12 inline-block">
-          <h2 style={{ color: "#010D48", fontFamily: "Street Flow NYC", WebkitTextStrokeWidth: "5px", 
-          WebkitTextStrokeColor: "white", fontWeight: "400", fontSize: "64px", letterSpacing: "3.2px",
-          textAlign: "center", paintOrder: "stroke"}}
+        <div className="relative
+          inline-block
+          text-5xl 
+          sm:text-6xl 
+          md:text-6xl"
+        >
+
+          <h2 className="relative"
+            style={{ 
+            color: "#010D48", 
+            fontFamily: "Street Flow NYC", 
+            WebkitTextStrokeWidth: "3px", 
+            WebkitTextStrokeColor: "white", 
+            letterSpacing: "3px",
+            paintOrder: "stroke"
+            }}
           >
             Keynote Speaker
           </h2>
-        <img
+
+          <img
             src="/KeynoteSpeaker/crown.svg"
             alt="crown"
-            className="absolute"
-            style={{
-                top: "-64px",         
-                left: "-40px"
-        }}
-  />
-        <img 
-          src="/KeynoteSpeaker/exclamation.svg" 
-          alt="!" 
-          className="absolute" 
-          style={{
-                top: "-30px",         
-                right: "-50px"
-            }}
-        />
+            className="absolute -top-20 -left-10"
+          />
+
+          <img 
+            src="/KeynoteSpeaker/exclamation.svg" 
+            alt="!" 
+            className="absolute top-1/2 -right-11 -translate-y-1/2" 
+          />      
+
+          
 
         </div>
 
         {/* Speaker Image */}
         <div className="relative mb-8">
-          <div className="w-65 h-83 rounded-full overflow-hidden border-blue-900">
+          <div className="w-48 h-55 sm:w-55 sm:h-60 md:w-65 md:h-72 rounded-full overflow-hidden">
             <img
               src={speaker.image}
               alt={speaker.name}
@@ -146,19 +176,37 @@ if (!speaker) {
         </div>
 
         {/* Name & Description*/}
-        <h3 style={{color: "white", textAlign: "center", WebkitTextStrokeWidth: "6px", WebkitTextStrokeColor: "#010D48", 
-            paintOrder: "stroke", fontSize: "48px", fontFamily: "Octin Spraypaint", fontWeight: "400", letterSpacing: "2.4px",
-            lineHeight: "normal"}}
-        >
-          {speaker.name}
-          <p style={{fontSize: "36px", letterSpacing: "1.8px"}}
+        <div className="flex flex-col">
+          
+          {/*Name*/}
+          <h3 
+            className="text-3xl sm:text-4xl md:text-5xl text-white"
+            style={{ 
+            WebkitTextStrokeWidth: "6px", 
+            WebkitTextStrokeColor: "#010D48", 
+            paintOrder: "stroke",  
+            fontFamily: "Octin Spraypaint",  
+            letterSpacing: "2px",
+            }}
+          >
+            {speaker.name}
+          </h3>
+            
+          {/*Description*/}
+          <p className="text-lg sm:text-xl text-white max-w-2xl"
+            style={{ 
+              WebkitTextStrokeWidth: "6px", 
+              WebkitTextStrokeColor: "#010D48", 
+              paintOrder: "stroke",  
+              fontFamily: "Octin Spraypaint",  
+              letterSpacing: "2px"
+            }}
           >
             {speaker.description}
-        </p>
-        </h3>
-
-      </div>
-      </div>
+          </p>
+      
+        </div>
+          
       </div>
     </section>
   );
