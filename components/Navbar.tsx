@@ -55,9 +55,7 @@ const Navbar = () => {
         }}
       >
         <div className="flex items-center justify-between w-full">
-        <div className="flex items-center justify-between w-full">
           {/* Logo */}
-          <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
             {/* Use scrollToId so it respects your offset */}
             <button
