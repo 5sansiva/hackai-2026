@@ -6,7 +6,8 @@ import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TracksPage from "./Tracks";
-import KeynoteSpeaker from "@/components/KeynoteSpeaker";
+import ScheduleSection from "./schedule";
+import SponsorsSection from "./Sponsors";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
@@ -97,6 +98,12 @@ export default function HackAIPage() {
             <About />
           </section>
 
+            <section
+              id="stats"
+              className="min-h-screen flex items-center justify-center m-6"
+            >
+              <Stats />
+            </section>
           <section
               id="countdown"
               className="min-h-screen flex items-center justify-center"
@@ -118,22 +125,18 @@ export default function HackAIPage() {
 
             
 
-            {/* <section
-              id="tracks"
-              className="min-h-screen flex items-center justify-center m-6"
-            >
-              <TracksPage />
-            </section> */}
-
             <section
+              id="schedule"
+              className="min-h-screen flex items-center justify-center m-6"
               id="donors"
               className="min-h-screen flex items-center justify-center m-2"
             >
-              <Donors />
+              <ScheduleSection />
             </section>
 
             <section
               id="faqs"
+              className="min-h-screen flex items-center justify-center m-6"
               className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
@@ -149,6 +152,11 @@ export default function HackAIPage() {
             
 
         </main>
+
+        {/* Sponsors: its own full-width block, visually separate from main content and footer */}
+        <section id="sponsors">
+          <SponsorsSection />
+        </section>
 
         <Footer />
       </div>
