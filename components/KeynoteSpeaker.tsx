@@ -148,7 +148,7 @@ if (!speaker) {
             Keynote Speaker
           </h2>
 
-          <img
+          {/* <img
             src="/KeynoteSpeaker/crown.svg"
             alt="crown"
             className="absolute -top-20 -left-10"
@@ -158,7 +158,7 @@ if (!speaker) {
             src="/KeynoteSpeaker/exclamation.svg" 
             alt="!" 
             className="absolute top-1/2 -right-11 -translate-y-1/2" 
-          />      
+          />       */}
 
           
 

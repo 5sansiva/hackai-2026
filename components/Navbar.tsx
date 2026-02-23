@@ -13,7 +13,6 @@ const Navbar = () => {
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
     { label: "DONORS", id: "donors" },
-    { label: "FAQS", id: "faqs" },
     { label: "KEYNOTE SPEAKER", id: "keynote"}
   ];
 

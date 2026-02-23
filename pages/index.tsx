@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Head from "next/head";
+import dynamic from "next/dynamic";
 import Home from "./Home";
 import About from "./About";
 import Stats from "./Stats";
@@ -11,6 +12,7 @@ import SponsorsSection from "./Sponsors";
 import FAQSection from "@/components/FaqCards";
 import Countdown from "./countdown";
 import Donors from "./Donors";
+import KeynoteSpeaker from "@/components/KeynoteSpeaker";
 
 export default function HackAIPage() {
 
@@ -90,7 +92,7 @@ export default function HackAIPage() {
 
 
         <main className="relative pt-24">
-          <section id="home" className="min-h-screen flex items-center justify-center -mt-20">
+          <section id="home" className="min-h-screen flex items-center justify-center pt-12">
             <Home />
           </section>
           
@@ -100,7 +102,7 @@ export default function HackAIPage() {
 
             <section
               id="stats"
-              className="min-h-screen flex items-center justify-center m-6"
+              className="min-h-screen flex items-center justify-center "
             >
               <Stats />
             </section>
@@ -116,36 +118,34 @@ export default function HackAIPage() {
 
           </section>
            
+
           <section
-            id="stats"
-            className="min-h-screen flex items-center justify-center m-2"
+            id="donors"
+            className="min-h-screen flex items-center justify-center"
           >
-            <Stats />
+            <Donors />
           </section>
 
             
 
-            <section
+            {/* <section
               id="schedule"
               className="min-h-screen flex items-center justify-center m-6"
-              id="donors"
-              className="min-h-screen flex items-center justify-center m-2"
             >
               <ScheduleSection />
-            </section>
+            </section> */}
 
             <section
               id="faqs"
-              className="min-h-screen flex items-center justify-center m-6"
               className="min-h-screen flex items-center justify-center m-2"
             >
               <FAQSection />
 
               
             </section>
+            
             <section
               id="keynote"
-              
             >
               <KeynoteSpeaker />
             </section>
@@ -153,10 +153,10 @@ export default function HackAIPage() {
 
         </main>
 
-        {/* Sponsors: its own full-width block, visually separate from main content and footer */}
+        {/* Sponsors: its own full-width block, visually separate from main content and footer
         <section id="sponsors">
           <SponsorsSection />
-        </section>
+        </section> */}
 
         <Footer />
       </div>
