@@ -127,13 +127,9 @@ export default function HackAIPage() {
               </div>
             </section>
 
-            <section
-              id="faqs"
-              className="min-h-screen flex items-center justify-center m-6"
-              className="min-h-screen flex items-center justify-center m-2"
-            >
-              <FAQSection />
-
+           <section id="faqs" className="min-h-screen flex items-center justify-center m-2">
+            <FAQSection />
+          </section>
         </main>
 
         {/* Sponsors: its own full-width block, visually separate from main content and footer */}
@@ -145,4 +141,4 @@ export default function HackAIPage() {
       </div>
     </div>
   );
-}
+} 
