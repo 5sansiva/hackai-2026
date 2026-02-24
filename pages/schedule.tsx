@@ -45,7 +45,7 @@ export default function ScheduleSection() {
 
         setError(null);
         const validTags: EventType[] = ["MANDATORY", "FOOD", "FUN", "WORKSHOP", "SUPPORT"];
-        const rows = snap.docs.map((d) => {
+        const rows: ScheduleEvent[] = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
           const location = String(data.location ?? data.room ?? "");
           const rawTag = String(data.tag ?? data.eventType ?? "")
