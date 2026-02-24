@@ -21,7 +21,7 @@ export default function HackAIPage() {
         <meta name="description" content="Welcome to HackAI: the biggest AI hackathon in North Texas!" />
       </Head>
 
-      {/* Navbar — ssr:false, renders only on client */}
+ 
       <Navbar />
 
       <div className="hidden md:block fixed top-0 right-6 z-40">
