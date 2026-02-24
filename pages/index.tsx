@@ -6,6 +6,7 @@ import About from "./About";
 import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ScheduleSection from "./schedule";
 
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
 const KeynoteSpeaker = dynamic(() => import("@/components/KeynoteSpeaker"), { ssr: false });
@@ -89,8 +90,24 @@ export default function HackAIPage() {
               style={{ background: "linear-gradient(to bottom, transparent, black)" }}
             />
           </section>
+          
+          <section
+              id="schedule"
+              className="min-h-[120vh] flex items-center justify-center py-12 m-6 relative"
+            >
+              <div className="relative z-10 w-full flex items-center justify-center py-8">
+                <ScheduleSection />
+              </div>
+           </section>
+          
         </div>
 
+
+        {/* Sponsors: its own full-width block, visually separate from main content and footer */}
+        {/* <section id="sponsors">
+          <SponsorsSection />
+        </section> */}
+          
         {/* Brick section */}
         <section
           className="relative w-full overflow-hidden -mt-10"
@@ -132,8 +149,6 @@ export default function HackAIPage() {
             </section>
             <section id="faqs" className="min-h-screen flex items-center justify-center mb-2">
               <FAQSection />
-
-              
             </section>
           </div>
         </section>
