@@ -61,15 +61,13 @@ export default function ScheduleSection() {
 
         setError(null);
         const validTags: EventType[] = ["MANDATORY", "FOOD", "FUN", "WORKSHOP", "SUPPORT"];
-        const rows = snap.docs.map((d) => {
+        const rows: ScheduleEvent[] = snap.docs.map((d) => {
           const data = d.data() as Record<string, unknown>;
           // Support both naming conventions: location/room, tag/eventType (Firestore may use lowercase)
           const location = String(data.location ?? data.room ?? "");
           const rawTag = String(data.tag ?? data.eventType ?? "").toUpperCase() as EventType;
           const tag: EventType = validTags.includes(rawTag) ? rawTag : "WORKSHOP";
-          // Normalize day to literal type
-          let rawDay = (data.day as string) ?? "saturday";
-          rawDay = rawDay.trim().toLowerCase();
+          const rawDay = (data.day as string) ?? "saturday";
           const day = rawDay === "sunday" ? "sunday" : "saturday";
           return {
             id: d.id,
