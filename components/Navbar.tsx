@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { auth } from "@/firebase/clientApp";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const NAV = [
     { label: "ABOUT", id: "about" },
@@ -15,11 +26,23 @@ const Navbar = () => {
   ];
 
   const scrollToId = (id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    const y = el.getBoundingClientRect().top + window.scrollY - 110; // navbar offset
-    window.scrollTo({ top: y, behavior: "smooth" });
+    if (router.pathname === "/") {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const y = el.getBoundingClientRect().top + window.scrollY - 110; // navbar offset
+      window.scrollTo({ top: y, behavior: "smooth" });
+    } else {
+      router.push(`/#${id}`).then(() => {
+        // Wait for navigation, then scroll
+        setTimeout(() => {
+          const el = document.getElementById(id);
+          if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 110;
+            window.scrollTo({ top: y, behavior: "smooth" });
+          }
+        }, 400);
+      });
+    }
   };
 
   useEffect(() => {
@@ -92,15 +115,36 @@ const Navbar = () => {
               </button>
             ))}
 
-            {/* Sign In button for desktop */}
-            {/* <Link href="/signin">
+            {/* Sign In/Out button for desktop */}
+            {isLoggedIn ? (
+              <>
+                <button
+                  className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => router.push("/userProfile")}
+                >
+                  Profile
+                </button>
+                <button
+                  className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={async () => {
+                    await auth.signOut();
+                    router.push("/signin");
+                  }}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
               <button
                 className="rounded-full px-4 py-3 ml-4 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
                 style={{ fontFamily: "Street Flow NYC" }}
+                onClick={() => router.push("/signin")}
               >
                 Sign In
               </button>
-            </Link> */}
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -196,15 +240,43 @@ const Navbar = () => {
               </button>
             ))}
 
-            {/* Sign In button for mobile */}
-            {/* <Link href="/signin">
+            {/* Sign In/Out button for mobile */}
+            {isLoggedIn ? (
+              <>
+                <button
+                  className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => {
+                    router.push("/userProfile");
+                    setOpen(false);
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={async () => {
+                    await auth.signOut();
+                    router.push("/signin");
+                    setOpen(false);
+                  }}
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
               <button
                 className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
                 style={{ fontFamily: "Street Flow NYC" }}
+                onClick={() => {
+                  router.push("/signin");
+                  setOpen(false);
+                }}
               >
                 Sign In
               </button>
-            </Link> */}
+            )}
 
             {/* Socials for mobile */}
             <div className="pt-2 flex items-center gap-4 sm:hidden">

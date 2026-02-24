@@ -67,7 +67,9 @@ export default function ScheduleSection() {
           const location = String(data.location ?? data.room ?? "");
           const rawTag = String(data.tag ?? data.eventType ?? "").toUpperCase() as EventType;
           const tag: EventType = validTags.includes(rawTag) ? rawTag : "WORKSHOP";
-          const rawDay = (data.day as string) ?? "saturday";
+          // Normalize day to literal type
+          let rawDay = (data.day as string) ?? "saturday";
+          rawDay = rawDay.trim().toLowerCase();
           const day = rawDay === "sunday" ? "sunday" : "saturday";
           return {
             id: d.id,
@@ -75,7 +77,7 @@ export default function ScheduleSection() {
             location,
             time: String(data.time ?? ""),
             tag,
-            day,
+            day: day as "saturday" | "sunday",
             order: Number(data.order ?? 0),
           };
         });
