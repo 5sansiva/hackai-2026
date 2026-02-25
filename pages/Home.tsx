@@ -16,7 +16,7 @@ export default function Home() {
                     className="absolute left-1/2 top-[21%] -translate-x-1/2 z-30 text-center text-white text-lg md:text-2xl drop-shadow-[0_4px_0_rgba(0,0,0,0.9)] uppercase tracking-widest"
                     style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "4px black", paintOrder: "stroke"}}
                 >
-                    Artificial Intelligence Society <br/> Presents
+                    Artificial Intelligence Society<br />Presents
                 </div>
                 
 
@@ -24,9 +24,9 @@ export default function Home() {
                 src="/Home/graffitti.svg"
                 alt="Graffitti outer"
                 fill
-                className="object-contain"
+                className="object-contain opacity-70"
                 priority
-                onLoadingComplete={handleMainImageLoad}
+                onLoad={handleMainImageLoad}
                 />
 
                 

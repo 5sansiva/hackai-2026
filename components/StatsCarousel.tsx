@@ -17,7 +17,7 @@ const StatCard = ({ src, alt, text }: StatItem) => (
         />
 
         <h2
-            style={{ fontFamily: "Street Flow NYC", fontSize: "40px" }}
+            style={{ fontFamily: "Street Flow NYC", fontSize: "40px", WebkitTextStroke: "3px black",paintOrder: "stroke" }}
             className="
             absolute left-1/2 top-[34%]
             -translate-x-1/2 -translate-y-1/2

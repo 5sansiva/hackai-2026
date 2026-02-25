@@ -1,164 +1,193 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/firebase/clientApp";
 
-type speaker = {
-    id: string;
-    name: string;
-    description: string;
-    image: string;
+type SpeakerDoc = {
+  name?: string;
+  description?: string;
+  image?: string;
 };
 
-export default function KeynoteSpeaker() {
-    const [speaker, setSpeaker] = useState<speaker | null>(null);
+type Speaker = {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+};
 
-useEffect(() => {
-  const unsub = onSnapshot(
-    collection(db, "keynote"),
-    (snap) => {
-      console.log("Speakers snapshot size:", snap.size);
-      console.log("First speaker:", snap.docs[0]?.data());
-      console.log("Project ID from client:", (db as any)?._app?.options?.projectId);
-        console.log("FAQ snapshot size:", snap.size);
-          console.log("First doc data:", snap.docs[0]?.data());
+function normalizeImage(value: unknown): string {
+  const raw = String(value ?? "").trim().replace(/^['"]|['"]$/g, "");
+  if (!raw) return "";
 
-      if (snap.docs.length > 0) {
-        const data = snap.docs[0].data();
-        setSpeaker({
-          id: snap.docs[0].id,
-          name: data.name ?? "",
-          description: data.description ?? "",
-          image: data.image ?? "",
-        });
-      }
-    },
-    (err) => {
-      console.error("Speakers error:", err);
-    }
-  );
+  if (/^https?:\/\//i.test(raw) || raw.startsWith("/")) return raw;
 
-  return () => unsub();
-}, []);
+  if (/^data:image\/[a-zA-Z0-9.+-]+;base64,/i.test(raw)) {
+    const [prefix, b64] = raw.split(",", 2);
+    return b64 ? `${prefix},${b64.replace(/\s+/g, "")}` : raw;
+  }
 
-if (!speaker) {
-  return <div className="text-white">Loading speaker...</div>;
+  return `data:image/jpeg;base64,${raw.replace(/\s+/g, "")}`;
 }
 
+export default function KeynoteSpeaker() {
+  const [speaker, setSpeaker] = useState<Speaker | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "empty" | "error">(
+    "loading"
+  );
+  const [errorMsg, setErrorMsg] = useState<string>("");
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, "keynote"),
+      (snap) => {
+        if (snap.empty) {
+          setSpeaker(null);
+          setStatus("empty");
+          return;
+        }
+
+        const chosen =
+          snap.docs.find((d) => {
+            const data = d.data() as SpeakerDoc;
+            return typeof data.image === "string" && data.image.trim().length > 0;
+          }) ?? snap.docs[0];
+
+        const data = chosen.data() as SpeakerDoc;
+
+        setSpeaker({
+          id: chosen.id,
+          name: (data.name ?? "").toString(),
+          description: (data.description ?? "").toString(),
+          image: (data.image ?? "").toString(),
+        });
+
+        setStatus("ready");
+      },
+      (err) => {
+        console.error("Keynote Firestore error:", err);
+        setSpeaker(null);
+        setErrorMsg(err?.message ?? "Unknown Firestore error");
+        setStatus("error");
+      }
+    );
+
+    return () => unsub();
+  }, []);
+
+  const imgSrc = useMemo(() => normalizeImage(speaker?.image), [speaker?.image]);
+
+  if (status === "loading") {
+    return <div className="text-white text-xl">Loading keynote speaker…</div>;
+  }
+  if (status === "empty") {
+    return (
+      <div className="text-yellow-300 text-xl">
+        No documents found in <code className="text-yellow-200">keynote</code>.
+      </div>
+    );
+  }
+  if (status === "error") {
+    return (
+      <div className="text-red-400 text-xl">
+        Failed to load keynote speaker: {errorMsg}
+      </div>
+    );
+  }
+  if (!speaker) return null;
+
   return (
-    <section
-      className="relative w-full min-h-[720px] flex flex-col items-center justify-center text-center overflow-hidden"
-      style={{
-        backgroundImage: "url('/KeynoteSpeaker/bg-brick.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-    
-    {/*bg graffiti with text*/}    
-    <div 
-    style={{backgroundImage: "url('/KeynoteSpeaker/bg-graffiti.svg')",
-            backgroundPosition: "center",
-    }}
-    className="absolute inset-0 h-full w-full overflow-hidden"
-    >
+    <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 py-24 w-full">
 
-        <h2 style={{color: "rgba(25,29,35,0.65)", textAlign: "left", WebkitTextStrokeWidth: "14px",
-                    WebkitTextStrokeColor: "rgba(152,152,152,0.30)", fontFamily: "Super Feel", fontSize: "157px",
-                    fontWeight: "400", paintOrder: "stroke", width: "735px",     // Moved to style
-            height: "308px",    // Moved to style
-            transform: "rotate(-16deg)", // Native CSS rotation
-            position: "absolute",
-            top: "140px"
-        }}
-        className="">
-            dig deep
+        {/* Title row: crown + text + exclamation all inline */}
+        <div className="flex flex-row items-center justify-center gap-4 mb-10">
+          {/* Crown */}
+          <img
+            src="/KeynoteSpeaker/crown.png"
+            className="w-16 sm:w-20 md:w-24 object-contain"
+            alt="crown"
+          />
 
-        </h2>
-
-        <h2 style={{color: "rgba(42,42,42,0.75)", textAlign: "right", WebkitTextStrokeWidth: "13px",
-                    WebkitTextStrokeColor: "#0A0A0A", fontFamily: "Super Feel", fontSize: "128px",
-                    fontWeight: "400",  width: "776px",     // Moved to style
-            height: "130px",    // Moved to style
-            position: "absolute",
-            bottom: "175px",
-            right: "20px"
-        }}
-        className="flex flex-col justify-right mt-10 w-194 h-23 text-right">
-            ai is cool
-
-        </h2>
-
-    {/*light overlay*/}
-    <div
-    style={{backgroundImage: "url('/KeynoteSpeaker/light.svg')",
-            backgroundPosition: "center"
-    }}
-    className="absolute inset-0">
-       
-        
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/4" />
-
-      
-      {/* Content wrapper */}
-      <div className="relative mt-10 z-10 flex flex-col items-center px-4">
-        
-        {/* Title */}
-        <div className="relative mt-12 inline-block">
-          <h2 style={{ color: "#010D48", fontFamily: "Street Flow NYC", WebkitTextStrokeWidth: "5px", 
-          WebkitTextStrokeColor: "white", fontWeight: "400", fontSize: "64px", letterSpacing: "3.2px",
-          textAlign: "center", paintOrder: "stroke"}}
+          {/* Title */}
+          <h2
+            style={{
+              color: "#000000",
+              fontFamily: "Street Flow NYC",
+              WebkitTextStrokeWidth: "5px",
+              WebkitTextStrokeColor: "white",
+              fontWeight: "400",
+              fontSize: "64px",
+              letterSpacing: "3.2px",
+              textAlign: "center",
+              paintOrder: "stroke",
+            }}
           >
             Keynote Speaker
           </h2>
-        <img
-            src="/KeynoteSpeaker/crown.svg"
-            alt="crown"
-            className="absolute"
-            style={{
-                top: "-64px",         
-                left: "-40px"
-        }}
-  />
-        <img 
-          src="/KeynoteSpeaker/exclamation.svg" 
-          alt="!" 
-          className="absolute" 
-          style={{
-                top: "-30px",         
-                right: "-50px"
-            }}
-        />
 
+          {/* Exclamation */}
+          <img
+            src="/KeynoteSpeaker/exclamation.png"
+            className="w-10 sm:w-12 md:w-16 object-contain"
+            alt="exclamation"
+          />
         </div>
 
         {/* Speaker Image */}
         <div className="relative mb-8">
-          <div className="w-65 h-83 rounded-full overflow-hidden border-blue-900">
-            <img
-              src={speaker.image}
-              alt={speaker.name}
-              className="w-full h-full object-cover"
-            />
+          <div className="w-[260px] h-[332px] md:w-[320px] md:h-[410px] rounded-full overflow-hidden border-4 border-blue-900 bg-white/10">
+            {imgSrc ? (
+              <img
+                src={imgSrc}
+                alt={speaker.name || "Keynote speaker"}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white/80">
+                No image
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Name & Description*/}
-        <h3 style={{color: "white", textAlign: "center", WebkitTextStrokeWidth: "6px", WebkitTextStrokeColor: "#010D48", 
-            paintOrder: "stroke", fontSize: "48px", fontFamily: "Octin Spraypaint", fontWeight: "400", letterSpacing: "2.4px",
-            lineHeight: "normal"}}
+        {/* Name */}
+        <h3
+          style={{
+            color: "white",
+            textAlign: "center",
+            WebkitTextStrokeWidth: "6px",
+            WebkitTextStrokeColor: "#010D48",
+            paintOrder: "stroke",
+            fontSize: "48px",
+            fontFamily: "Octin Spraypaint",
+            fontWeight: "400",
+            letterSpacing: "2.4px",
+            lineHeight: "normal",
+          }}
         >
           {speaker.name}
-          <p style={{fontSize: "36px", letterSpacing: "1.8px"}}
-          >
-            {speaker.description}
-        </p>
         </h3>
 
-      </div>
-      </div>
+        {/* Description */}
+        <p
+          style={{
+            color: "white",
+            textAlign: "center",
+            WebkitTextStrokeWidth: "6px",
+            WebkitTextStrokeColor: "#010D48",
+            paintOrder: "stroke",
+            fontSize: "36px",
+            fontFamily: "Octin Spraypaint",
+            fontWeight: "400",
+            letterSpacing: "1.8px",
+            lineHeight: "normal",
+            marginTop: "10px",
+            maxWidth: "900px",
+          }}
+        >
+          {speaker.description}
+        </p>
       </div>
     </section>
   );

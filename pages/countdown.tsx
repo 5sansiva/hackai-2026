@@ -33,14 +33,11 @@ export default function CountdownHero({
   target,
   leftGraffitiSrc,
   rightGraffitiSrc,
-  frameSrc,
+  frameSrc = "/Countdown/countdownBg.svg",
   heightClassName = "h-[740px] md:h-[460px]",
   title = "Countdown",
   footerText = "till hacking begins",
 }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const targetMs = useMemo(() => {
     if (target != null) return toMs(target);
     return nextMarch7Local(9, 0, 0).getTime();
@@ -60,10 +57,10 @@ export default function CountdownHero({
   const mins = Math.floor((totalSec % (60 * 60)) / 60);
   const secs = totalSec % 60;
 
-  const safeDays = mounted ? String(days).padStart(2, "0") : "--";
-  const safeHours = mounted ? pad2(hours) : "--";
-  const safeMins = mounted ? pad2(mins) : "--";
-  const safeSecs = mounted ? pad2(secs) : "--";
+  const safeDays = String(days).padStart(2, "0");
+  const safeHours = pad2(hours);
+  const safeMins = pad2(mins);
+  const safeSecs = pad2(secs);
 
   return (
     <section className={`relative w-full overflow-hidden ${heightClassName}`}
