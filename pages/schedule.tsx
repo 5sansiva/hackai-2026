@@ -60,7 +60,7 @@ export default function ScheduleSection() {
             location,
             time: String(data.time ?? ""),
             tag,
-            day,
+            day: day as "saturday" | "sunday",
             order: Number(data.order ?? 0),
           };
         });

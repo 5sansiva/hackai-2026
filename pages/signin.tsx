@@ -1,12 +1,32 @@
 import React, { useState, useEffect } from "react";
+import Navbar from "@/components/Navbar";
+import { useRouter } from "next/router";
+import { db, auth } from "@/firebase/clientApp";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 const SignIn = () => {
+  const router = useRouter();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"code" | "email">("code");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"register" | "login">("register");
   const [error, setError] = useState("");
+  const [codeDocId, setCodeDocId] = useState<string | null>(null);
+  const [expectedEmail, setExpectedEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Focus next input on change
+  // Redirect if already logged in
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        router.replace("/userProfile");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  // Focus next/prev input on change and handle backspace
   const handleChange = (idx: number, value: string) => {
     if (!/^[0-9]?$/.test(value)) return;
     const newCode = [...code];
@@ -18,96 +38,203 @@ const SignIn = () => {
     }
   };
 
-  // Handle code submit (simulate verification)
-  const handleCodeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code.join("").length !== 6) {
-      setError("Please enter the 6-digit code.");
-      return;
+  // Handle backspace to move focus to previous input
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !code[idx] && idx > 0) {
+      const prev = document.getElementById(`code-input-${idx - 1}`);
+      if (prev) {
+        (prev as HTMLInputElement).focus();
+        const newCode = [...code];
+        newCode[idx - 1] = "";
+        setCode(newCode);
+        e.preventDefault();
+      }
     }
-    setError("");
-    // TODO: Verify code (simulate success)
-    setStep("email");
   };
 
-  // Handle email submit (simulate account creation)
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!/^[^@\s]+@gmail\.com$/.test(email)) {
-      setError("Please enter a valid Gmail address.");
-      return;
+  // Validate code and fetch email
+  const validateCode = async () => {
+    if (code.join("").length !== 6) {
+      setError("Please enter the 6-digit code.");
+      return false;
     }
     setError("");
-    // TODO: Create account and log in
-    localStorage.setItem("isLoggedIn", "true");
-    window.location.href = "/";
+    setLoading(true);
+    try {
+      const codeStr = code.join("");
+      const docRef = doc(db, "hackers", codeStr);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        setError("Invalid code. Please check and try again.");
+        setLoading(false);
+        return false;
+      }
+      const data = docSnap.data();
+      if (data.hasLoggedin && mode === "register") {
+        setError("This code has already been used to register.");
+        setLoading(false);
+        return false;
+      }
+      setCodeDocId(codeStr);
+      setExpectedEmail(data.email || null);
+      setEmail(data.email || "");
+      setLoading(false);
+      return true;
+    } catch (err) {
+      setError("Error verifying code. Please try again.");
+      setLoading(false);
+      return false;
+    }
+  };
+
+  // Handle register/login submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === "register") {
+      const valid = await validateCode();
+      if (!valid) return;
+      if (!/^[^@\s]+@gmail\.com$/.test(email)) {
+        setError("Invalid email. Please use the one you used on the application.");
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+      setError("");
+      setLoading(true);
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // No email verification required, allow immediate login
+        if (codeDocId) {
+          const docRef = doc(db, "hackers", codeDocId);
+          await updateDoc(docRef, { hasLoggedin: true });
+        }
+        alert("Account created! You can now log in.");
+        window.location.href = "/signin";
+      } catch (err: any) {
+        setError(err.message || "Error creating account. Try again.");
+      }
+      setLoading(false);
+    } else {
+      // Login mode
+      if (!/^[^@\s]+@gmail\.com$/.test(email)) {
+        setError("Invalid email. Please use the one you used on the application.");
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+      setError("");
+      setLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.replace("/userProfile");
+      } catch (err: any) {
+        setError(err.message || "Error signing in. Try again.");
+      }
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative">
-      {/* Background image */}
-      <div
-        className="fixed inset-0 -z-10"
-        style={{
-          backgroundColor: "black",
-          backgroundImage: "url(/mainbg.svg)",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div className="glass-card rounded-3xl shadow-xl p-10 w-full max-w-md flex flex-col items-center relative z-10 text-white">
-        {step === "code" ? (
-          <form onSubmit={handleCodeSubmit} className="w-full flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-2 text-center">Confirm it’s you</h2>
-            <p className="mb-6 text-center text-gray-700">Enter the 6-digit code you received before the event</p>
-            <div className="flex gap-3 mb-6">
-              {code.map((digit, idx) => (
-                <input
-                  key={idx}
-                  id={`code-input-${idx}`}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  className={`w-12 h-14 text-2xl text-center border-2 rounded-lg focus:outline-none transition-all ${digit ? "border-green-500" : "border-gray-300"}`}
-                  value={digit}
-                  onChange={e => handleChange(idx, e.target.value)}
-                  onFocus={e => e.target.select()}
-                  required
-                />
-              ))}
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div style={{ height: '110px' }} />
+      <div className="flex flex-1 items-center justify-center relative">
+        {/* Background image */}
+        <div
+          className="fixed inset-0 -z-10"
+          style={{
+            backgroundColor: "black",
+            backgroundImage: "url(/mainbg.svg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        />
+        <div
+          className="rounded-2xl shadow-xl py-8 flex flex-col items-center relative z-10 text-white mt-56 md:mt-64"
+          style={{
+            maxWidth: '650px',
+            minWidth: '320px',
+            width: '90%',
+            background: 'linear-gradient(120deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 100%)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            backdropFilter: 'blur(18px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+            border: '.5px solid rgba(255,255,255,0.35)',
+            outline: '1.5px solid rgba(255,255,255,0.18)'
+          }}
+        >
+          <div className="w-full px-4 md:px-8">
+            <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
+          <h2 className="text-3xl font-bold mb-2 text-center">
+            {mode === "register" ? "Create an account" : "Login"}
+          </h2>
+          <div className="mb-2 text-center text-gray-400">
+            {mode === "register" ? (
+              <>
+                Already have an account?{' '}
+                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("login")}>Sign in</span>
+              </>
+            ) : (
+              <>
+                Don't have an account?{' '}
+                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("register")}>Create one</span>
+              </>
+            )}
+          </div>
+          {/* 6-digit code input */}
+          {mode === "register" && (
+            <div className="w-full mb-4">
+              <label className="block mb-2 text-left text-gray-300 font-semibold">Enter 6-digit login code</label>
+              <div className="flex gap-3 justify-start w-full pl-1">
+                {code.map((digit, idx) => (
+                  <input
+                    key={idx}
+                    id={`code-input-${idx}`}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    className={`w-12 h-14 text-2xl text-center border-2 rounded-lg focus:outline-none transition-all bg-black/60 ${digit ? "border-green-500" : "border-gray-400"}`}
+                    value={digit}
+                    onChange={e => handleChange(idx, e.target.value)}
+                    onKeyDown={e => handleKeyDown(idx, e)}
+                    onFocus={e => e.target.select()}
+                    required
+                  />
+                ))}
+              </div>
             </div>
-            {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
-            <button type="submit" className="w-full py-3 rounded-lg bg-[#2d0a4b] text-white font-semibold text-lg hover:bg-[#4b1c7a] transition mb-2">Done</button>
-            <div className="text-center text-sm text-gray-600">Didn’t get the code? Contact the organizers.</div>
-          </form>
-        ) : (
-          <form onSubmit={handleEmailSubmit} className="w-full flex flex-col items-center">
-            <h2 className="text-3xl font-bold mb-4 text-center">Create your account</h2>
-            <input
-              type="email"
-              placeholder="Enter your Gmail address"
-              className="mb-4 px-4 py-3 rounded-lg border border-gray-300 w-full text-lg focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="Set a password"
-              className="mb-4 px-4 py-3 rounded-lg border border-gray-300 w-full text-lg focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
-              required
-            />
-            <div className="w-full flex flex-col gap-2 mb-4">
-              <button type="submit" className="w-full py-3 rounded-lg bg-[#2d0a4b] text-white font-semibold text-lg hover:bg-[#4b1c7a] transition">Create Account</button>
-              <button type="button" className="w-full py-3 rounded-lg bg-[#4285F4] text-white font-semibold text-lg hover:bg-[#357ae8] transition flex items-center justify-center gap-2">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M21.805 10.023h-9.765v3.977h5.588c-.241 1.238-1.03 2.287-2.199 2.963v2.463h3.555c2.083-1.922 3.291-4.757 2.821-8.403z" fill="#4285F4"/><path d="M12.04 21c2.7 0 4.968-.89 6.624-2.413l-3.555-2.463c-.987.663-2.25 1.057-3.069 1.057-2.357 0-4.36-1.591-5.078-3.73H3.322v2.522C4.969 19.553 8.23 21 12.04 21z" fill="#34A853"/><path d="M6.962 13.451a5.987 5.987 0 0 1 0-3.451V7.478H3.322a8.997 8.997 0 0 0 0 8.044l3.64-2.071z" fill="#FBBC05"/><path d="M12.04 6.509c1.47 0 2.789.507 3.827 1.497l2.872-2.872C17.004 3.89 14.736 3 12.04 3c-3.81 0-7.071 1.447-8.718 3.478l3.64 2.071c.718-2.139 2.721-3.74 5.078-3.74z" fill="#EA4335"/></g></svg>
-                Sign in with Google
-              </button>
-            </div>
-            {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
-          </form>
-        )}
+          )}
+          {/* Email input (editable for both modes) */}
+          <input
+            type="email"
+            placeholder="Enter your email address"
+            className="mb-4 px-4 py-3 rounded-lg border border-gray-300 w-full text-lg focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Enter your password"
+            className="mb-4 px-4 py-3 rounded-lg border border-gray-300 w-full text-lg focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <div className="w-full flex flex-col gap-2 mb-4">
+            <button type="submit" className="w-full py-3 rounded-lg bg-[#2d0a4b] text-white font-semibold text-lg hover:bg-[#4b1c7a] transition" disabled={loading}>
+              {loading ? "Loading..." : mode === "register" ? "Create Account" : "Sign In"}
+            </button>
+          </div>
+          {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );
