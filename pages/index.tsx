@@ -7,6 +7,7 @@ import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ScheduleSection from "./schedule";
+import SponsorsSection from "./Sponsors";
 
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
 const KeynoteSpeaker = dynamic(() => import("@/components/KeynoteSpeaker"), { ssr: false });
@@ -103,8 +104,8 @@ export default function HackAIPage() {
         </div>
 
 
-        {/* Sponsors: its own full-width block, visually separate from main content and footer */}
-        {/* <section id="sponsors">
+        {/* Sponsors: its own full-width block, visually separate from main content and footer */} 
+         {/* <section id="sponsors">
           <SponsorsSection />
         </section> */}
           

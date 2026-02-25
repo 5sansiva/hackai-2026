@@ -116,7 +116,7 @@ const Navbar = () => {
             ))}
 
             {/* Sign In/Out button for desktop */}
-            {isLoggedIn ? (
+            {/* {isLoggedIn ? (
               <>
                 <button
                   className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
@@ -144,7 +144,7 @@ const Navbar = () => {
               >
                 Sign In
               </button>
-            )}
+            )} */}
           </div>
 
           <div className="flex items-center gap-6">
