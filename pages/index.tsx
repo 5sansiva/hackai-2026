@@ -26,7 +26,7 @@ export default function HackAIPage() {
  
       <Navbar />
 
-      <div className="hidden md:block fixed top-0 right-6 z-40">
+      <div className="hidden md:block absolute top-0 right-6 z-40">
         <a
           href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
           target="_blank"
@@ -39,7 +39,7 @@ export default function HackAIPage() {
           />
         </a>
       </div>
-      <div className="md:hidden fixed top-16 right-4 z-40">
+      <div className="md:hidden absolute top-16 right-4 z-40">
         <a
           href="https://mlh.io/na?utm_source=na-hackathon&utm_medium=TrustBadge&utm_campaign=2026-season&utm_content=black"
           target="_blank"
