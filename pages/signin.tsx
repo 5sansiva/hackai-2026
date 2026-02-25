@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import { useRouter } from "next/router";
 import { db, auth } from "@/firebase/clientApp";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 const SignIn = () => {
   const router = useRouter();
