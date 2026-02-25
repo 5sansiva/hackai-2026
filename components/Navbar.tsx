@@ -2,12 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "@/firebase/clientApp";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
-import Image from "next/image";
-import Link from "next/link";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,6 +14,16 @@ const Navbar = () => {
       setIsLoggedIn(!!user);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const syncAdminState = () => {
+      setIsAdmin(localStorage.getItem("hackai_admin") === "true");
+    };
+
+    syncAdminState();
+    window.addEventListener("storage", syncAdminState);
+    return () => window.removeEventListener("storage", syncAdminState);
   }, []);
 
   const NAV = [
@@ -115,22 +124,42 @@ const Navbar = () => {
               </button>
             ))}
 
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/scanner");
+                  setOpen(false);
+                }}
+                className="py-2 text-[#DDD059] cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-white tracking-widest"
+                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black", paintOrder: "stroke" }}
+              >
+                SCANNER
+              </button>
+            )}
+
             {/* Sign In/Out button for desktop */}
-            {/* {isLoggedIn ? (
+            {/* {isLoggedIn || isAdmin ? (
               <>
-                <button
-                  className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
-                  style={{ fontFamily: "Street Flow NYC" }}
-                  onClick={() => router.push("/userProfile")}
-                >
-                  Profile
-                </button>
+                {isLoggedIn && (
+                  <button
+                    className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
+                    style={{ fontFamily: "Street Flow NYC" }}
+                    onClick={() => router.push("/userProfile")}
+                  >
+                    Profile
+                  </button>
+                )}
                 <button
                   className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    await auth.signOut();
-                    router.push("/signin");
+                    localStorage.removeItem("hackai_admin");
+                    setIsAdmin(false);
+                    if (isLoggedIn) {
+                      await auth.signOut();
+                    }
+                    router.push("/");
                   }}
                 >
                   Sign Out
@@ -241,24 +270,30 @@ const Navbar = () => {
             ))}
 
             {/* Sign In/Out button for mobile */}
-            {isLoggedIn ? (
+            {isLoggedIn || isAdmin ? (
               <>
-                <button
-                  className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
-                  style={{ fontFamily: "Street Flow NYC" }}
-                  onClick={() => {
-                    router.push("/userProfile");
-                    setOpen(false);
-                  }}
-                >
-                  Profile
-                </button>
+                {isLoggedIn && (
+                  <button
+                    className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
+                    style={{ fontFamily: "Street Flow NYC" }}
+                    onClick={() => {
+                      router.push("/userProfile");
+                      setOpen(false);
+                    }}
+                  >
+                    Profile
+                  </button>
+                )}
                 <button
                   className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    await auth.signOut();
-                    router.push("/signin");
+                    localStorage.removeItem("hackai_admin");
+                    setIsAdmin(false);
+                    if (isLoggedIn) {
+                      await auth.signOut();
+                    }
+                    router.push("/");
                     setOpen(false);
                   }}
                 >
@@ -275,6 +310,20 @@ const Navbar = () => {
                 }}
               >
                 Sign In
+              </button>
+            )}
+
+            {isAdmin && (
+              <button
+                type="button"
+                className="rounded-xl px-4 py-3 mt-2 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
+                style={{ fontFamily: "Street Flow NYC" }}
+                onClick={() => {
+                  router.push("/scanner");
+                  setOpen(false);
+                }}
+              >
+                Scanner
               </button>
             )}
 

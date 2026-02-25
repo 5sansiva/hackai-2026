@@ -61,7 +61,7 @@ const Stats = () => {
           <div className="absolute left-[10%] top-[-12%] w-65 sm:w-[320px] md:w-95">
             <div className="relative w-full">
               <Image
-                src="/Stats/hackerCount.svg"
+                src="/Stats/hackercount.svg"
                 alt="Hackers Count"
                 width={400}
                 height={300}
