@@ -80,6 +80,13 @@ export default function HackAIPage() {
             <Stats />
           </section>
 
+          {/* <section
+            id="schedule"
+            className="relative min-h-[170vh] px-6 md:px-12 pt-32 pb-56 overflow-visible"
+          >
+            <ScheduleSection />
+          </section> */}
+
           <section
             id="donors"
             className="relative min-h-screen flex items-center justify-center -mt-50"
@@ -91,14 +98,7 @@ export default function HackAIPage() {
             />
           </section>
           
-          <section
-              id="schedule"
-              className="min-h-[120vh] flex items-center justify-center py-12 m-6 relative"
-            >
-              <div className="relative z-10 w-full flex items-center justify-center py-8">
-                <ScheduleSection />
-              </div>
-           </section>
+         
           
         </div>
 
