@@ -104,6 +104,13 @@ export default function HackAIPage() {
         </div>
 
 
+            <section
+              id="schedule"
+              className="min-h-[120vh] flex items-center justify-center py-12 m-6 relative"
+            >
+              <div className="relative z-10 w-full flex items-center justify-center py-8">
+                <ScheduleSection />
+              </div>
         {/* Sponsors: its own full-width block, visually separate from main content and footer */} 
          {/* <section id="sponsors">
           <SponsorsSection />
@@ -150,8 +157,12 @@ export default function HackAIPage() {
             </section>
             <section id="faqs" className="min-h-screen flex items-center justify-center mb-2">
               <FAQSection />
-            </section>
-          </div>
+
+        </main>
+
+        {/* Sponsors: full-width block */}
+        <section id="sponsors">
+          <SponsorsSection />
         </section>
 
       </main>
