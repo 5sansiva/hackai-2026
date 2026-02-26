@@ -30,8 +30,9 @@ const Navbar = () => {
     { label: "ABOUT", id: "about" },
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
-    { label: "DONORS", id: "donors" },
     { label: "SPEAKER", id: "keynote" },
+    { label: "SPONSORS", id: "sponsors" }
+    ,
   ];
 
   const scrollToId = (id: string) => {
