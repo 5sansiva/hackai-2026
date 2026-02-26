@@ -1,14 +1,21 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 
 export default function Home() {
+    const [showHome, setShowHome] = useState(false);
+
+    useEffect(() => {
+        const frame = requestAnimationFrame(() => setShowHome(true));
+        return () => cancelAnimationFrame(frame);
+    }, []);
+
     // Callback to notify preloader when main image is loaded
     const handleMainImageLoad = useCallback(() => {
         
     }, []);
 
     return (
-        <div className="flex items-center w-full justify-center h-full">
+        <div className={`flex items-center w-full justify-center h-full transition-opacity duration-700 ease-out ${showHome ? "opacity-100" : "opacity-0"}`}>
             <div className="relative w-full max-w-400 h-[90vh] max-h-225">
                 
                
@@ -98,7 +105,7 @@ export default function Home() {
                         pointer-events-none
                     "
                     >
-                    <div className="relative w-full aspect-square rotate-20 origin-center">
+                    {/* <div className="relative w-full aspect-square rotate-20 origin-center">
                         <Image
                         src="/Home/heart.svg"
                         alt="Heart"
@@ -119,7 +126,7 @@ export default function Home() {
                             Apps close on <span className="text-pink-300">Feb 24th</span>
                         </p>
                         </div>
-                        </div>
+                    </div> */}
                 </div>       
             </div>
         </div>

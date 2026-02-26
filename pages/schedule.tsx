@@ -137,8 +137,8 @@ export default function ScheduleSection() {
         {/* Title */}
         <div className="flex justify-center mb-10">
           <h2
-            className="text-white text-5xl md:text-6xl tracking-widest uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.9)]"
-            style={{ fontFamily: "Street Flow NYC" }}
+            className="text-white text-4xl sm:text-5xl md:text-6xl tracking-wide uppercase drop-shadow-[0_4px_0_rgba(0,0,0,0.85)]"
+            style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "6px black", paintOrder: "stroke" }}
           >
             Schedule
           </h2>
