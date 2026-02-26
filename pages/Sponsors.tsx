@@ -48,7 +48,7 @@ export default function SponsorsSection() {
 
   if (loading) {
     return (
-      <div className="w-full flex items-center justify-center py-24 bg-black">
+      <div className="w-full flex items-center justify-center py-24">
         <div className="text-white tracking-widest uppercase" style={{ fontFamily: "Octin Spraypaint" }}>
           LOADING...
         </div>
@@ -58,7 +58,7 @@ export default function SponsorsSection() {
 
   if (error) {
     return (
-      <div className="w-full flex items-center justify-center py-24 bg-black">
+      <div className="w-full flex items-center justify-center py-24">
         <div className="text-red-300 tracking-widest uppercase" style={{ fontFamily: "Octin Spraypaint" }}>
           SPONSORS ERROR: {error}
         </div>
@@ -67,24 +67,7 @@ export default function SponsorsSection() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-black">
-      {/* Brick wall background */}
-      <img
-        src="/sponsors/brick-wall-bg.png"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover opacity-90"
-        draggable={false}
-      />
-      <div
-        className="absolute top-0 left-0 right-0 pointer-events-none z-[1]"
-        style={{
-          height: "40vh",
-          minHeight: "200px",
-          background: "linear-gradient(to bottom, #000 0%, #000 25%, rgba(0,0,0,0.92) 50%, rgba(0,0,0,0.6) 78%, transparent 100%)",
-        }}
-      />
-
-      <div className="relative z-10 pt-6 md:pt-8 pb-8 md:pb-12 px-4 md:px-8">
+    <div className="w-full pt-6 md:pt-8 pb-8 md:pb-12 px-4 md:px-8">
         {/* Title */}
         <div className="flex justify-center mb-6 md:mb-10">
           <img
@@ -94,36 +77,41 @@ export default function SponsorsSection() {
           />
         </div>
 
-        {/* Sponsor grid — 2 columns, taller boxes */}
+        {/* Sponsor grid — 1 column mobile, 2 columns desktop */}
         {sponsors.length > 0 && (
-          <div className="max-w-4xl mx-auto grid grid-cols-2 gap-6 md:gap-8">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {sponsors.map((sponsor) => (
               <a
                 key={sponsor.id}
                 href={sponsor.link || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative w-full aspect-[4/3] flex items-center justify-center group"
+                className="group relative w-full aspect-[4/3] flex items-center justify-center transition-transform duration-200 hover:-translate-y-1"
               >
                 {/* Frame */}
                 <img
                   src="/sponsors/logo-box-empty.png"
                   alt=""
-                  className="absolute inset-0 w-full h-full object-fill block"
+                  className="absolute inset-0 w-full h-full object-fill block transition-transform duration-200 group-hover:scale-[1.01]"
+                  aria-hidden
+                />
+                {/* White backing panel for logo visibility */}
+                <div
+                  className="absolute inset-x-[11%] top-[13%] bottom-[16%] bg-white rounded-[24px] transition-shadow duration-200 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.35)]"
                   aria-hidden
                 />
                 {/* Sponsor logo */}
                 <img
                   src={sponsor.logo}
                   alt={sponsor.name || "Sponsor logo"}
-                  className="relative z-10 max-w-[70%] max-h-[70%] w-auto h-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                  className="relative z-10 object-contain transition-transform duration-200 group-hover:scale-105"
+                  style={{ width: "32%", height: "32%" }}
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                 />
               </a>
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 } 

@@ -6,7 +6,6 @@ import About from "./About";
 import Stats from "./Stats";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ScheduleSection from "./schedule";
 import SponsorsSection from "./Sponsors";
 
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
@@ -55,7 +54,7 @@ export default function HackAIPage() {
 
       <main className="relative">
 
-        {/* mainbg wrapper: Home → Donors */}
+        {/* mainbg wrapper: Home → Stats */}
         <div
           className="relative"
           style={{
@@ -77,44 +76,18 @@ export default function HackAIPage() {
             <Countdown />
           </section>
 
-          <section id="stats" className="min-h-screen flex items-center justify-center">
+          <section id="stats" className="relative min-h-screen flex items-center justify-center mb-10">
             <Stats />
+            
           </section>
 
-          {/* <section
-            id="schedule"
-            className="relative min-h-[170vh] px-6 md:px-12 pt-32 pb-56 overflow-visible"
-          >
-            <ScheduleSection />
-          </section> */}
-
-          <section
-            id="donors"
-            className="relative min-h-screen flex items-center justify-center -mt-50"
-          >
-            <Donors />
-            <div
-              className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 z-10"
+          <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10"
               style={{ background: "linear-gradient(to bottom, transparent, black)" }}
             />
-          </section>
-          
-         
-          
+
         </div>
 
-
-            <section
-              id="schedule"
-              className="min-h-[120vh] flex items-center justify-center py-12 m-6 relative"
-            >
-              <div className="relative z-10 w-full flex items-center justify-center py-8">
-                <ScheduleSection />
-              </div>
-        {/* Sponsors: its own full-width block, visually separate from main content and footer */} 
-         {/* <section id="sponsors">
-          <SponsorsSection />
-        </section> */}
           
         {/* Brick section */}
         <section
@@ -157,12 +130,39 @@ export default function HackAIPage() {
             </section>
             <section id="faqs" className="min-h-screen flex items-center justify-center mb-2">
               <FAQSection />
+              <div
+              className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10"
+              style={{ background: "linear-gradient(to bottom, transparent, black)" }}
+              />
+            </section>
+          </div>
+        </section>
 
-        </main>
+        {/* Sponsors + Donors section */}
+        <section
+          className="relative w-full overflow-hidden"
+          style={{
+            backgroundImage: "url('/sponsors/brick-wall-bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
+          <div
+            className="pointer-events-none absolute top-0 left-0 right-0 z-[1] h-[260px]"
+            style={{
+              background: "linear-gradient(to bottom, rgba(0,0,0,1) 30%, rgba(0,0,0,0))",
+            }}
+          />
+          <div className="absolute inset-0 z-0 bg-black/20" />
 
-        {/* Sponsors: full-width block */}
-        <section id="sponsors">
-          <SponsorsSection />
+          <div className="relative z-10">
+            <section id="sponsors" className="relative w-full min-h-screen flex items-center justify-center">
+              <SponsorsSection />
+            </section>
+            <section className="relative w-full flex items-center justify-center pb-8 md:pb-12">
+              <Donors />
+            </section>
+          </div>
         </section>
 
       </main>
