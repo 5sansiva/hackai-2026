@@ -30,6 +30,7 @@ const Navbar = () => {
     { label: "ABOUT", id: "about" },
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
+    { label: "TRACKS", id: "tracks" },
     { label: "DONORS", id: "donors" },
     { label: "SPEAKER", id: "keynote" },
   ];
