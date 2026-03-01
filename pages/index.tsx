@@ -4,9 +4,11 @@ import dynamic from "next/dynamic";
 import Home from "./Home";
 import About from "./About";
 import Stats from "./Stats";
+import TracksPage from "./Tracks";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SponsorsSection from "./Sponsors";
+import ScheduleSection from "./schedule";
 
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
 const KeynoteSpeaker = dynamic(() => import("@/components/KeynoteSpeaker"), { ssr: false });
@@ -81,6 +83,10 @@ export default function HackAIPage() {
             
           </section>
 
+          {/* <section id="schedule" className="relative min-h-screen flex items-center justify-center mb-10">
+            <ScheduleSection />
+          </section> */}
+
           <div
               className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 z-10"
               style={{ background: "linear-gradient(to bottom, transparent, black)" }}
@@ -122,7 +128,16 @@ export default function HackAIPage() {
               backgroundSize: "cover",
             }}
           />
+
+           {/* <section
+              id="tracks"
+              className="min-h-screen flex items-center justify-center m-6"
+            >
+              <TracksPage />
+            </section>  */}
           <div className="absolute inset-0 z-0 bg-black/5" />
+
+          
 
           <div className="relative z-10">
             <section id="keynote" className="relative w-full min-h-screen">
@@ -137,6 +152,7 @@ export default function HackAIPage() {
             </section>
           </div>
         </section>
+            
 
         {/* Sponsors + Donors section */}
         <section
