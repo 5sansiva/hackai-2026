@@ -139,7 +139,7 @@ export default function TracksPage() {
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-16">
+      <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-32">
         {/* Title */}
         <h1
           className="text-center text-4xl sm:text-5xl md:text-6xl tracking-wide"
