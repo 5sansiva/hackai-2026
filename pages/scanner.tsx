@@ -2,13 +2,30 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { FaQrcode, FaHistory, FaCamera, FaStop } from "react-icons/fa";
+import { auth, db } from "@/firebase/clientApp";
+import {
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  limit,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { isAdminEmail } from "@/utils/adminAccess";
 
 type ScanMode =
   | "check-in"
   | "saturday-lunch"
   | "sunday-lunch"
   | "dinner"
-  | "breakfast";
+  | "breakfast"
+  | "waitlist";
 
 type ScanRecord = {
   id: string;
@@ -22,6 +39,9 @@ type ScanStatus = {
   text: string;
 };
 
+type ModeCounts = Record<ScanMode, number>;
+type StandardScanMode = Exclude<ScanMode, "waitlist">;
+
 type DetectedCode = { rawValue?: string };
 type QRDetector = {
   detect: (source: HTMLCanvasElement) => Promise<DetectedCode[]>;
@@ -29,6 +49,36 @@ type QRDetector = {
 type QRDetectorConstructor = new (opts?: { formats?: string[] }) => QRDetector;
 
 const SCAN_STORAGE_KEY = "hackai_scanner_records";
+const HACKERS_COLLECTION = "hackers";
+const SCANNER_STATS_COLLECTION = "scannerStats";
+const SCANNER_STATS_DOC_ID = "global";
+const QR_SCAN_COOLDOWN_MS = 10000;
+
+const createEmptyCounts = (): ModeCounts => ({
+  "check-in": 0,
+  "saturday-lunch": 0,
+  "sunday-lunch": 0,
+  dinner: 0,
+  breakfast: 0,
+  waitlist: 0,
+});
+
+const MODE_STATS_FIELD: Record<ScanMode, string> = {
+  "check-in": "checkIn",
+  "saturday-lunch": "saturdayLunch",
+  "sunday-lunch": "sundayLunch",
+  dinner: "dinner",
+  breakfast: "breakfast",
+  waitlist: "waitlist",
+};
+
+const MODE_CONFIG: Record<StandardScanMode, { field: string; requiresCheckIn: boolean; aliases: string[] }> = {
+  "check-in": { field: "isCheckedIn", requiresCheckIn: false, aliases: ["isCheckedIn"] },
+  "saturday-lunch": { field: "lunchd1", requiresCheckIn: true, aliases: ["lunchd1", "lunch1"] },
+  "sunday-lunch": { field: "lunchd2", requiresCheckIn: true, aliases: ["lunchd2", "lunch2"] },
+  dinner: { field: "dinner", requiresCheckIn: true, aliases: ["dinner"] },
+  breakfast: { field: "breakfast", requiresCheckIn: true, aliases: ["breakfast"] },
+};
 
 const SCAN_MODES: { value: ScanMode; label: string; help: string }[] = [
   { value: "check-in", label: "Check In", help: "Use for event check in." },
@@ -36,15 +86,22 @@ const SCAN_MODES: { value: ScanMode; label: string; help: string }[] = [
   { value: "sunday-lunch", label: "Sunday-Lunch", help: "Use for Sunday lunch distribution." },
   { value: "dinner", label: "Dinner", help: "Use for dinner scans." },
   { value: "breakfast", label: "Breakfast", help: "Use for breakfast scans." },
+  {
+    value: "waitlist",
+    label: "Waitlist",
+    help: "Use to move rejected hackers to waitlist after scanning their QR.",
+  },
 ];
 
 function ScannerPage() {
   const router = useRouter();
   const [mode, setMode] = useState<ScanMode>("check-in");
-  const [scanValue, setScanValue] = useState("");
   const [status, setStatus] = useState<ScanStatus | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
   const [scannerError, setScannerError] = useState("");
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [statsCounts, setStatsCounts] = useState<ModeCounts>(createEmptyCounts);
+  const [statsDocId, setStatsDocId] = useState("");
   const [records, setRecords] = useState<ScanRecord[]>(() => {
     if (typeof window === "undefined") return [];
     const raw = localStorage.getItem(SCAN_STORAGE_KEY);
@@ -57,20 +114,73 @@ function ScannerPage() {
     }
   });
 
-  const isAdmin = localStorage.getItem("hackai_admin") === "true";
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<QRDetector | null>(null);
   const loopTimerRef = useRef<number | null>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
+  const recentQrScansRef = useRef<Record<string, number>>({});
+  const statusHoldUntilRef = useRef(0);
   const isDetectingRef = useRef(false);
+  const hackerIdCacheRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
-    if (!isAdmin) {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAdmin(isAdminEmail(user?.email));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin === false) {
       router.replace("/signin");
     }
   }, [isAdmin, router]);
+
+  useEffect(() => {
+    if (isAdmin !== true) return;
+
+    let cancelled = false;
+
+    const loadStats = async () => {
+      try {
+        const statsListSnap = await getDocs(query(collection(db, SCANNER_STATS_COLLECTION), limit(1)));
+        if (statsListSnap.empty) {
+          if (!cancelled) {
+            setStatsDocId(SCANNER_STATS_DOC_ID);
+            setStatsCounts(createEmptyCounts());
+          }
+          return;
+        }
+
+        const statsDoc = statsListSnap.docs[0];
+        const resolvedDocId = statsDoc.id;
+        const data = statsDoc.data() as Record<string, unknown>;
+        const loaded: ModeCounts = createEmptyCounts();
+        for (const scanMode of SCAN_MODES) {
+          const field = MODE_STATS_FIELD[scanMode.value];
+          const raw = data[field];
+          loaded[scanMode.value] = typeof raw === "number" ? raw : 0;
+        }
+
+        if (!cancelled) {
+          setStatsDocId(resolvedDocId);
+          setStatsCounts(loaded);
+        }
+      } catch {
+        if (!cancelled) {
+          setStatsCounts(createEmptyCounts());
+        }
+      }
+    };
+
+    void loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   useEffect(() => {
     localStorage.setItem(SCAN_STORAGE_KEY, JSON.stringify(records));
@@ -81,29 +191,237 @@ function ScannerPage() {
     [mode]
   );
 
-  const counts = useMemo(() => {
-    const seed: Record<ScanMode, number> = {
-      "check-in": 0,
-      "saturday-lunch": 0,
-      "sunday-lunch": 0,
-      dinner: 0,
-      breakfast: 0,
-    };
-    for (const record of records) seed[record.mode] += 1;
-    return seed;
-  }, [records]);
-
   const visibleStatModes = useMemo(
-    () => SCAN_MODES.filter((item) => counts[item.value] >= 1),
-    [counts]
+    () => SCAN_MODES.filter((item) => statsCounts[item.value] > 0),
+    [statsCounts]
   );
 
-  const addScanRecord = useCallback(
-    (value: string): boolean => {
-      const trimmed = value.trim();
-      if (!trimmed) {
-        setStatus({ tone: "error", text: "Scan failed: no QR value detected." });
-        return false;
+  const ensureStatsDocId = useCallback(async (): Promise<string> => {
+    if (statsDocId) return statsDocId;
+
+    const statsListSnap = await getDocs(query(collection(db, SCANNER_STATS_COLLECTION), limit(1)));
+    if (!statsListSnap.empty) {
+      const existingId = statsListSnap.docs[0].id;
+      setStatsDocId(existingId);
+      return existingId;
+    }
+
+    setStatsDocId(SCANNER_STATS_DOC_ID);
+    return SCANNER_STATS_DOC_ID;
+  }, [statsDocId]);
+
+  const findHackerIdByQrValue = useCallback(async (rawValue: string): Promise<string | null> => {
+    const trimmed = rawValue.trim();
+    if (!trimmed) return null;
+
+    const lower = trimmed.toLowerCase();
+    if (hackerIdCacheRef.current[lower]) {
+      return hackerIdCacheRef.current[lower];
+    }
+
+    const hackersRef = collection(db, HACKERS_COLLECTION);
+
+    const lowerMatchSnap = await getDocs(
+      query(hackersRef, where("email", "==", lower), limit(1))
+    );
+    if (!lowerMatchSnap.empty) {
+      const hackerId = lowerMatchSnap.docs[0].id;
+      hackerIdCacheRef.current[lower] = hackerId;
+      return hackerId;
+    }
+
+    if (trimmed !== lower) {
+      const exactMatchSnap = await getDocs(
+        query(hackersRef, where("email", "==", trimmed), limit(1))
+      );
+      if (!exactMatchSnap.empty) {
+        const hackerId = exactMatchSnap.docs[0].id;
+        hackerIdCacheRef.current[lower] = hackerId;
+        return hackerId;
+      }
+    }
+
+    const idMatchSnap = await getDoc(doc(db, HACKERS_COLLECTION, trimmed));
+    if (idMatchSnap.exists()) {
+      hackerIdCacheRef.current[lower] = idMatchSnap.id;
+      return idMatchSnap.id;
+    }
+
+    return null;
+  }, []);
+
+  const getBooleanByAliases = useCallback((data: Record<string, unknown>, aliases: string[]): boolean => {
+    return aliases.some((alias) => Boolean(data[alias]));
+  }, []);
+
+  const setStatusWithHold = useCallback((next: ScanStatus, holdMs = 3000) => {
+    setStatus(next);
+    statusHoldUntilRef.current = Date.now() + holdMs;
+  }, []);
+
+  const handleScanAttempt = useCallback(async (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      setStatusWithHold({ tone: "error", text: "Rejected: no QR value detected." });
+      return;
+    }
+
+    try {
+      const hackerId = await findHackerIdByQrValue(trimmed);
+      if (!hackerId) {
+        setStatusWithHold({
+          tone: "error",
+          text: `Rejected: no hacker found in ${HACKERS_COLLECTION} for "${trimmed}".`,
+        });
+        return;
+      }
+
+      const hackerRef = doc(db, HACKERS_COLLECTION, hackerId);
+      const hackerSnap = await getDoc(hackerRef);
+      if (!hackerSnap.exists()) {
+        setStatusWithHold({ tone: "error", text: "Rejected: hacker record does not exist." });
+        return;
+      }
+
+      const hackerData = hackerSnap.data() as Record<string, unknown>;
+      const modeLabel = SCAN_MODES.find((item) => item.value === mode)?.label ?? mode;
+      const currentStatus = String(hackerData.status || "").trim().toLowerCase();
+
+      if (mode === "waitlist") {
+        if (currentStatus === "waitlist") {
+          setStatusWithHold({
+            tone: "error",
+            text: "Rejected: this hacker is already on waitlist.",
+          });
+          return;
+        }
+
+        if (currentStatus !== "rejected") {
+          setStatusWithHold({
+            tone: "error",
+            text: "Rejected: only rejected hackers can be moved to waitlist.",
+          });
+          return;
+        }
+
+        const now = new Date();
+        const record: ScanRecord = {
+          id: `${now.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
+          mode,
+          value: trimmed,
+          createdAt: now.toLocaleString(),
+        };
+        const scanEntry = {
+          mode: record.mode,
+          value: record.value,
+          scannedAt: now.toISOString(),
+          scannedAtEpoch: now.getTime(),
+          createdAtLabel: record.createdAt,
+          status: "approved",
+        };
+
+        await updateDoc(hackerRef, {
+          status: "waitlist",
+          waitlistedAt: serverTimestamp(),
+          lastScannedAt: serverTimestamp(),
+          scanCount: increment(1),
+          scans: arrayUnion(scanEntry),
+        });
+
+        let statsUpdated = false;
+        try {
+          const resolvedStatsDocId = await ensureStatsDocId();
+          await setDoc(
+            doc(db, SCANNER_STATS_COLLECTION, resolvedStatsDocId),
+            {
+              [MODE_STATS_FIELD[mode]]: increment(1),
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+          statsUpdated = true;
+        } catch (statsErr) {
+          console.error("Scanner stats update failed (non-blocking):", statsErr);
+        }
+
+        setRecords((prev) => [record, ...prev].slice(0, 100));
+        if (statsUpdated) {
+          setStatsCounts((prev) => ({
+            ...prev,
+            [mode]: prev[mode] + 1,
+          }));
+        }
+        setStatusWithHold({
+          tone: "success",
+          text: `Approved: moved ${trimmed} from rejected to waitlist. Yes, it's working.`,
+        });
+        return;
+      }
+
+      const modeConfig = MODE_CONFIG[mode];
+
+      if (currentStatus === "rejected") {
+        setStatusWithHold({
+          tone: "error",
+          text: "Rejected: this hacker's status is rejected. Use Waitlist mode to process them.",
+        });
+        return;
+      }
+
+      if (mode === "check-in" && currentStatus !== "accepted") {
+        setStatusWithHold({
+          tone: "error",
+          text: `Rejected: only accepted hackers can be checked in (current status: ${currentStatus || "unknown"}).`,
+        });
+        return;
+      }
+
+      if (mode === "check-in") {
+        const hasLoggedIn = getBooleanByAliases(hackerData, ["hasLoggedin", "hasLoggedIn"]);
+        if (!hasLoggedIn) {
+          setStatusWithHold({
+            tone: "error",
+            text: "Rejected: hacker must be logged in before check in.",
+          });
+          return;
+        }
+      }
+
+      if (mode !== "check-in") {
+        if (currentStatus !== "accepted") {
+          setStatusWithHold({
+            tone: "error",
+            text: `Rejected: only accepted hackers can be scanned for ${modeLabel}.`,
+          });
+          return;
+        }
+
+        const hasLoggedIn = getBooleanByAliases(hackerData, ["hasLoggedin", "hasLoggedIn"]);
+        if (!hasLoggedIn) {
+          setStatusWithHold({
+            tone: "error",
+            text: `Rejected: hacker must be logged in before ${modeLabel}.`,
+          });
+          return;
+        }
+      }
+
+      const alreadyScannedForMode = getBooleanByAliases(hackerData, modeConfig.aliases);
+      if (alreadyScannedForMode) {
+        setStatusWithHold({
+          tone: "error",
+          text: "This hacker has already been scanned.",
+        });
+        return;
+      }
+
+      const isCheckedIn = getBooleanByAliases(hackerData, ["isCheckedIn"]);
+      if (modeConfig.requiresCheckIn && !isCheckedIn) {
+        setStatusWithHold({
+          tone: "error",
+          text: `Rejected: hacker must be checked in before ${modeLabel}.`,
+        });
+        return;
       }
 
       const now = new Date();
@@ -113,17 +431,71 @@ function ScannerPage() {
         value: trimmed,
         createdAt: now.toLocaleString(),
       };
+      const scanEntry = {
+        mode: record.mode,
+        value: record.value,
+        scannedAt: now.toISOString(),
+        scannedAtEpoch: now.getTime(),
+        createdAtLabel: record.createdAt,
+        status: "approved",
+      };
+
+      const updates: Record<string, unknown> = {
+        lastScannedAt: serverTimestamp(),
+        scanCount: increment(1),
+        [modeConfig.field]: true,
+        scans: arrayUnion(scanEntry),
+      };
+      await updateDoc(hackerRef, updates);
+      let statsUpdated = false;
+      try {
+        const resolvedStatsDocId = await ensureStatsDocId();
+        await setDoc(
+          doc(db, SCANNER_STATS_COLLECTION, resolvedStatsDocId),
+          {
+            [MODE_STATS_FIELD[mode]]: increment(1),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+        statsUpdated = true;
+      } catch (statsErr) {
+        console.error("Scanner stats update failed (non-blocking):", statsErr);
+      }
 
       setRecords((prev) => [record, ...prev].slice(0, 100));
-      setScanValue("");
-      setStatus({
-        tone: "success",
-        text: `Scan successful: ${selectedMode.label} -> ${trimmed}`,
+      if (statsUpdated) {
+        setStatsCounts((prev) => ({
+          ...prev,
+          [mode]: prev[mode] + 1,
+        }));
+      }
+      if (mode === "check-in") {
+        const firstName = String(
+          hackerData.fname || hackerData.first_name || hackerData.firstName || ""
+        ).trim();
+        const lastName = String(
+          hackerData.lname || hackerData.last_name || hackerData.lastName || ""
+        ).trim();
+        const fullName = `${firstName} ${lastName}`.trim() || trimmed;
+        setStatusWithHold({
+          tone: "success",
+          text: `Approved: ${fullName} is accepted and has been checked in.`,
+        });
+      } else {
+        setStatusWithHold({
+          tone: "success",
+          text: `Approved: ${modeLabel} scan recorded for ${trimmed}. Yes, it's working.`,
+        });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Scan processing failed.";
+      setStatusWithHold({
+        tone: "error",
+        text: `Rejected: ${message}`,
       });
-      return true;
-    },
-    [mode, selectedMode.label]
-  );
+    }
+  }, [ensureStatsDocId, findHackerIdByQrValue, getBooleanByAliases, mode, setStatusWithHold]);
 
   const stopScanner = useCallback(() => {
     if (loopTimerRef.current) {
@@ -145,6 +517,12 @@ function ScannerPage() {
   const tickDetect = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || !detectorRef.current) return;
     if (isDetectingRef.current) return;
+    if (Date.now() < statusHoldUntilRef.current) {
+      loopTimerRef.current = window.setTimeout(() => {
+        void tickDetect();
+      }, 120);
+      return;
+    }
 
     const video = videoRef.current;
     if (video.readyState < 2) {
@@ -168,15 +546,31 @@ function ScannerPage() {
       const rawValue = codes[0]?.rawValue?.trim();
       if (rawValue) {
         const nowMs = Date.now();
+        const scanKey = `${mode}:${rawValue.toLowerCase()}`;
+        const lastSeenAt = recentQrScansRef.current[scanKey] ?? 0;
+        if (nowMs - lastSeenAt < QR_SCAN_COOLDOWN_MS) {
+          setStatusWithHold({
+            tone: "info",
+            text: "This hacker has already been scanned.",
+          });
+          return;
+        }
+
         const isSameAsLast =
           rawValue === lastScanRef.current.value && nowMs - lastScanRef.current.at < 1500;
         if (!isSameAsLast) {
           lastScanRef.current = { value: rawValue, at: nowMs };
-          addScanRecord(rawValue);
+          recentQrScansRef.current[scanKey] = nowMs;
+          for (const [key, at] of Object.entries(recentQrScansRef.current)) {
+            if (nowMs - at > QR_SCAN_COOLDOWN_MS * 3) {
+              delete recentQrScansRef.current[key];
+            }
+          }
+          await handleScanAttempt(rawValue);
         } else {
-          setStatus({
+          setStatusWithHold({
             tone: "info",
-            text: "Scan ignored: duplicate QR detected too quickly.",
+            text: "This hacker has already been scanned.",
           });
         }
       }
@@ -188,7 +582,7 @@ function ScannerPage() {
         void tickDetect();
       }, 220);
     }
-  }, [addScanRecord]);
+  }, [handleScanAttempt, setStatusWithHold]);
 
   const startScanner = useCallback(async () => {
     setScannerError("");
@@ -240,7 +634,7 @@ function ScannerPage() {
     };
   }, [stopScanner]);
 
-  if (!isAdmin) {
+  if (isAdmin !== true) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1a0033] via-[#2d0a4b] to-[#0f051d] text-white">
         Loading scanner...
@@ -250,7 +644,7 @@ function ScannerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1a0033] via-[#2d0a4b] to-[#0f051d] text-white">
-      <div className="px-5 md:px-10 pt-6">
+      <div className="px-5 md:px-10 pt-6 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => router.push("/")}
@@ -262,6 +656,13 @@ function ScannerPage() {
             alt="HackAI"
             className="object-contain w-full h-full"
           />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push("/admin/hackers")}
+          className="rounded-xl px-4 py-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
+        >
+          Hackers
         </button>
       </div>
 
@@ -296,7 +697,7 @@ function ScannerPage() {
                   className="flex-1 min-w-[140px] rounded-xl border border-white/20 bg-black/35 px-4 py-3"
                 >
                   <div className="text-[11px] uppercase tracking-widest text-gray-200">{item.label}</div>
-                  <div className="text-2xl font-bold text-[#DDD059]">{counts[item.value]}</div>
+                  <div className="text-2xl font-bold text-[#DDD059]">{statsCounts[item.value]}</div>
                 </div>
               ))}
             </div>
@@ -333,39 +734,26 @@ function ScannerPage() {
             {scannerError && <p className="mt-2 text-sm text-red-300">{scannerError}</p>}
           </div>
 
-          <div className="w-full mb-4">
-            <label className="block mb-2 text-sm uppercase tracking-widest text-gray-200">
-              Manual Value (Fallback)
-            </label>
-            <input
-              value={scanValue}
-              onChange={(e) => setScanValue(e.target.value)}
-              placeholder="Paste/enter QR value"
-              className="w-full rounded-xl px-4 py-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
-            />
+          <div className="w-full mb-4 rounded-xl border border-white/20 bg-black/35 px-4 py-3">
+            <div className="text-sm uppercase tracking-widest text-gray-200 mb-1">Scan Status</div>
+            {status ? (
+              <p
+                className={`text-sm ${
+                  status.tone === "success"
+                    ? "text-green-300"
+                    : status.tone === "error"
+                      ? "text-red-300"
+                      : "text-[#DDD059]"
+                }`}
+              >
+                {status.text}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-300">
+                No scan yet. Start the camera and scan a QR code.
+              </p>
+            )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => addScanRecord(scanValue)}
-            className="w-full rounded-xl px-4 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
-          >
-            Save Manual Scan
-          </button>
-
-          {status && (
-            <p
-              className={`mt-3 text-sm ${
-                status.tone === "success"
-                  ? "text-green-300"
-                  : status.tone === "error"
-                    ? "text-red-300"
-                    : "text-[#DDD059]"
-              }`}
-            >
-              {status.text}
-            </p>
-          )}
 
           <div className="w-full mt-7">
             <div className="flex items-center gap-2 mb-3 text-gray-200">

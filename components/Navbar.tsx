@@ -1,35 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "@/firebase/clientApp";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
+import { isAdminEmail } from "@/utils/adminAccess";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsLoggedIn(!!user);
+      setIsAdmin(isAdminEmail(user?.email));
     });
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const syncAdminState = () => {
-      setIsAdmin(localStorage.getItem("hackai_admin") === "true");
-    };
-
-    syncAdminState();
-    window.addEventListener("storage", syncAdminState);
-    return () => window.removeEventListener("storage", syncAdminState);
   }, []);
 
   const NAV = [
     { label: "ABOUT", id: "about" },
     { label: "COUNTDOWN", id: "countdown" },
     { label: "STATS", id: "stats" },
+    // { label: "TRACKS", id: "tracks" },
     { label: "SPEAKER", id: "keynote" },
     { label: "SPONSORS", id: "sponsors" }
     ,
@@ -70,6 +65,18 @@ const Navbar = () => {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (e: MouseEvent) => {
+      if (!adminMenuRef.current) return;
+      if (!adminMenuRef.current.contains(e.target as Node)) {
+        setAdminMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
   }, []);
 
   return (
@@ -126,21 +133,46 @@ const Navbar = () => {
             ))}
 
             {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  router.push("/scanner");
-                  setOpen(false);
-                }}
-                className="py-2 text-[#DDD059] cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-white tracking-widest"
-                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black", paintOrder: "stroke" }}
-              >
-                SCANNER
-              </button>
+              <div className="relative" ref={adminMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setAdminMenuOpen((v) => !v)}
+                  className="py-2 text-[#DDD059] cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-white tracking-widest"
+                  style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black", paintOrder: "stroke" }}
+                >
+                  ADMIN
+                </button>
+                {adminMenuOpen && (
+                  <div className="absolute right-0 mt-2 min-w-44 rounded-xl border border-white/20 bg-black/85 backdrop-blur-md p-2 shadow-2xl z-50">
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        router.push("/scanner");
+                        setAdminMenuOpen(false);
+                        setOpen(false);
+                      }}
+                    >
+                      Scanner
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        router.push("/admin/hackers");
+                        setAdminMenuOpen(false);
+                        setOpen(false);
+                      }}
+                    >
+                      Hackers
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Sign In/Out button for desktop */}
-            {/* {isLoggedIn || isAdmin ? (
+            {isLoggedIn || isAdmin ? (
               <>
                 {isLoggedIn && (
                   <button
@@ -155,8 +187,6 @@ const Navbar = () => {
                   className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    localStorage.removeItem("hackai_admin");
-                    setIsAdmin(false);
                     if (isLoggedIn) {
                       await auth.signOut();
                     }
@@ -174,7 +204,7 @@ const Navbar = () => {
               >
                 Sign In
               </button>
-            )} */}
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -248,13 +278,13 @@ const Navbar = () => {
       {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
       <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
         <div
-          className={`mt-3 overflow-hidden rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
+          className={`mt-3 overflow-y-auto rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
             open
-              ? "max-h-80 opacity-100 pointer-events-auto"
+              ? "max-h-[420px] opacity-100 pointer-events-auto"
               : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
-          <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="px-6 py-5 flex flex-col gap-3">
             {NAV.map((item) => (
               <button
                 key={item.id}
@@ -289,8 +319,6 @@ const Navbar = () => {
                   className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    localStorage.removeItem("hackai_admin");
-                    setIsAdmin(false);
                     if (isLoggedIn) {
                       await auth.signOut();
                     }
@@ -315,17 +343,36 @@ const Navbar = () => {
             )}
 
             {isAdmin && (
-              <button
-                type="button"
-                className="rounded-xl px-4 py-3 mt-2 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
-                style={{ fontFamily: "Street Flow NYC" }}
-                onClick={() => {
-                  router.push("/scanner");
-                  setOpen(false);
-                }}
-              >
-                Scanner
-              </button>
+              <div className="rounded-xl border border-[#DDD059]/35 bg-[#DDD059]/10 p-3 mt-2">
+                <div
+                  className="text-xs uppercase tracking-widest text-[#DDD059] mb-2"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                >
+                  Admin
+                </div>
+                <button
+                  type="button"
+                  className="rounded-xl px-4 py-3 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => {
+                    router.push("/scanner");
+                    setOpen(false);
+                  }}
+                >
+                  Scanner
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl px-4 py-3 mt-2 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => {
+                    router.push("/admin/hackers");
+                    setOpen(false);
+                  }}
+                >
+                  Hackers
+                </button>
+              </div>
             )}
 
             {/* Socials for mobile */}
