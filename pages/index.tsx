@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Home from "./Home";
 import About from "./About";
 import Stats from "./Stats";
+import TracksPage from "./Tracks";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SponsorsSection from "./Sponsors";
@@ -122,7 +123,16 @@ export default function HackAIPage() {
               backgroundSize: "cover",
             }}
           />
+
+           <section
+              id="tracks"
+              className="min-h-screen flex items-center justify-center m-6"
+            >
+              <TracksPage />
+            </section> 
           <div className="absolute inset-0 z-0 bg-black/5" />
+
+          
 
           <div className="relative z-10">
             <section id="keynote" className="relative w-full min-h-screen">
@@ -137,6 +147,7 @@ export default function HackAIPage() {
             </section>
           </div>
         </section>
+            
 
         {/* Sponsors + Donors section */}
         <section

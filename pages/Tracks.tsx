@@ -1,12 +1,24 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase/clientApp";
 import Image from "next/image";
 
 type GeneralTrack = {
   title: string;
   description: string;
+  sponsor?: string;
   frameSrc: string; // chalk square frame (transparent center)
   paintSrc: string; // paint/splatter header (transparent bg)
   paintColor: string; // NEW: Tailwind background color class
 };
+
+type Track = {
+  description: string;
+  name: string;
+  sponsor: string;
+}
 
 type MiniTrack = {
   label: string;
@@ -18,6 +30,7 @@ const generalTrack: GeneralTrack[] = [
     title: "Education Programs",
     description:
       "INFORMATION ON EDUCATIONAL OPPORTUNITIES, GI BILL BENEFITS, VOCATIONAL TRAINING, AND CAREER TRANSITION ASSISTANCE.",
+    sponsor: "Microsoft",
     frameSrc: "/Tracks/generalborder.svg",
     paintSrc: "/Tracks/trackscribble.svg",
     paintColor: "#8A38F5", // Example color
@@ -26,6 +39,7 @@ const generalTrack: GeneralTrack[] = [
     title: "Financial Wellness",
     description:
       "EXPERT FINANCIAL GUIDANCE INCLUDING DEBT MANAGEMENT, RETIREMENT PLANNING, VA BENEFITS OPTIMIZATION, AND HOME LOAN ASSISTANCE.",
+    sponsor: "JPMorgan Chase",
     frameSrc: "/Tracks/generalborder.svg",
     paintSrc: "/Tracks/trackscribble.svg",
     paintColor: "#C24D76", // Example color
@@ -42,6 +56,7 @@ const generalTrack: GeneralTrack[] = [
     title: "Stable Condition (Healthcare)",
     description:
       "ACCESS TO HEALTHCARE RESOURCES AND SERVICES FOR VETERANS AND THEIR FAMILIES. SERVICES INCLUDE MEDICAL CONSULTATIONS, MENTAL HEALTH SUPPORT, PRESCRIPTION ASSISTANCE, AND REHABILITATION PROGRAMS.",
+    sponsor: "UnitedHealth Group",
     frameSrc: "/Tracks/generalborder.svg",
     paintSrc: "/Tracks/trackscribble.svg",
     paintColor: "#5FACFE", // Example color
@@ -55,6 +70,61 @@ const miniTracks: MiniTrack[] = [
 ];
 
 export default function TracksPage() {
+  const [tracks, setTracks] = useState<GeneralTrack[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "tracks"),
+      (snapshot) => {
+        const colors = ["#8A38F5", "#C24D76", "#22989E", "#5FACFE", "#FF6B35", "#4ECDC4"];
+        
+        const fetchedTracks: GeneralTrack[] = snapshot.docs.map((doc, index) => {
+          const data = doc.data() as Track;
+          
+          return {
+            title: data.name || "Track Name",
+            description: data.description || "This is a track.",
+            sponsor: data.sponsor || "",
+            frameSrc: "/Tracks/generalborder.svg",
+            paintSrc: "/Tracks/trackscribble.svg",
+            paintColor: colors[index % colors.length],
+          };
+        });
+
+        setTracks(fetchedTracks);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching tracks:", error);
+        // Fallback to hardcoded tracks on error
+        setTracks(generalTrack);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="relative min-h-screen overflow-hidden text-white flex items-center justify-center">
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <Image
+            src="/Tracks/tracksbg.svg"
+            alt=""
+            fill
+            priority
+            className="object-cover" 
+          />
+        </div>
+        <div className="relative z-10 text-xl" style={{ fontFamily: "Street Flow NYC" }}>
+          Loading tracks...
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden text-white">
 
@@ -83,8 +153,8 @@ export default function TracksPage() {
 
         <div className="mt-8 w-full">
           <div className="mx-auto grid w-full max-w-[1060px] grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            {generalTrack.map((t) => (
-              <GeneralTrackCard key={t.title} track={t} />
+            {tracks.map((t, index) => (
+              <GeneralTrackCard key={`${t.title}-${index}`} track={t} />
             ))}
           </div>
         </div>
@@ -175,6 +245,18 @@ function GeneralTrackCard({ track }: { track: GeneralTrack }) {
         >
           {track.description}
         </p>
+
+        {/* Sponsor (if available) */}
+        {track.sponsor && (
+          <div className="mt-4 text-center">
+            <p className="text-xs text-white/60 mb-1" style={{ fontFamily: "Octin Spraypaint", letterSpacing: "0.1em" }}>
+              SPONSORED BY
+            </p>
+            <p className="text-sm font-medium text-white/90" style={{ fontFamily: "Octin Spraypaint" }}>
+              {track.sponsor}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
