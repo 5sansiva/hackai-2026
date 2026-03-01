@@ -5,6 +5,7 @@ import { FaArrowLeft, FaHistory, FaQrcode, FaSave, FaUserCircle } from "react-ic
 import {
   Timestamp,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -13,6 +14,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/firebase/clientApp";
@@ -34,7 +36,7 @@ type HackerScan = {
   sortAt: number;
 };
 
-const HACKERS_COLLECTION = "testHackers";
+const HACKERS_COLLECTION = "hackers";
 const NON_EDITABLE_FIELDS = new Set(["scans", "createdAt", "updatedAt", "lastScannedAt"]);
 
 const toSafeString = (value: unknown): string => (typeof value === "string" ? value : "");
@@ -201,6 +203,7 @@ function HackerAdminDetailPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
@@ -388,6 +391,39 @@ function HackerAdminDetailPage() {
     }
   };
 
+  const deleteProfile = async () => {
+    if (!hackerId || !isEditing || saving || deleting) return;
+    const confirmed = window.confirm(
+      "Delete this hacker profile from Firebase? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError("");
+    setSaveMessage("");
+
+    try {
+      while (true) {
+        const scansSnap = await getDocs(
+          query(collection(db, HACKERS_COLLECTION, hackerId, "scans"), limit(400))
+        );
+        if (scansSnap.empty) break;
+        const batch = writeBatch(db);
+        scansSnap.docs.forEach((scanDoc) => {
+          batch.delete(scanDoc.ref);
+        });
+        await batch.commit();
+      }
+
+      await deleteDoc(doc(db, HACKERS_COLLECTION, hackerId));
+      router.replace("/admin/hackers");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to delete profile.";
+      setError(message);
+      setDeleting(false);
+    }
+  };
+
   if (isAdmin !== true) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1a0033] via-[#2d0a4b] to-[#0f051d] text-white">
@@ -454,6 +490,7 @@ function HackerAdminDetailPage() {
                         <button
                           type="button"
                           onClick={startEditing}
+                          disabled={saving || deleting}
                           className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
                         >
                           Edit
@@ -463,15 +500,23 @@ function HackerAdminDetailPage() {
                           <button
                             type="button"
                             onClick={cancelEditing}
-                            disabled={saving}
+                            disabled={saving || deleting}
                             className="rounded-xl px-4 py-2 border border-white/20 bg-black/35 text-white font-semibold transition hover:bg-white/10 disabled:opacity-70"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
+                            onClick={deleteProfile}
+                            disabled={saving || deleting}
+                            className="rounded-xl px-4 py-2 bg-red-700/90 text-white font-semibold transition hover:bg-red-600 disabled:opacity-70"
+                          >
+                            {deleting ? "Deleting..." : "Delete Profile"}
+                          </button>
+                          <button
+                            type="button"
                             onClick={saveProfile}
-                            disabled={saving}
+                            disabled={saving || deleting}
                             className="inline-flex items-center gap-2 rounded-xl px-4 py-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] disabled:opacity-70"
                           >
                             <FaSave />

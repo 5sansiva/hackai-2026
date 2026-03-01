@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { FaChevronRight, FaSearch, FaUsers, FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import { Timestamp, collection, getDocs } from "firebase/firestore";
+import { Timestamp, collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/firebase/clientApp";
 import { isAdminEmail } from "@/utils/adminAccess";
@@ -15,12 +15,34 @@ type HackerRow = {
   isCheckedIn: boolean;
   status: string;
   lastScannedAt: string;
+  waitlistedAt: string;
+  waitlistedAtEpoch: number;
   scanCount: number;
 };
 
-const HACKERS_COLLECTION = "testHackers";
+const HACKERS_COLLECTION = "hackers";
 const ITEMS_PER_PAGE = 30;
 const PAGE_WINDOW_SIZE = 6;
+
+type ManualStatus = "accepted" | "rejected" | "waitlist";
+
+type ManualProfileForm = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: ManualStatus;
+  foodGroup: string;
+  phoneNumber: string;
+};
+
+const EMPTY_MANUAL_PROFILE: ManualProfileForm = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  status: "accepted",
+  foodGroup: "",
+  phoneNumber: "",
+};
 
 const toSafeString = (value: unknown): string => (typeof value === "string" ? value : "");
 
@@ -87,6 +109,24 @@ const formatDateValue = (value: unknown): string => {
   return "Not available";
 };
 
+const dateToEpoch = (value: unknown): number => {
+  if (!value) return 0;
+  if (value instanceof Timestamp) return value.toDate().getTime();
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as { toDate?: unknown }).toDate === "function"
+  ) {
+    return ((value as { toDate: () => Date }).toDate()).getTime();
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
+
 const getDisplayName = (id: string, data: Record<string, unknown>): string => {
   const firstName = getStringByKeys(data, ["firstName", "first_name", "first name", "fname"]);
   const lastName = getStringByKeys(data, ["lastName", "last_name", "last name", "lname"]);
@@ -123,9 +163,15 @@ function AdminHackersPage() {
   const [loadError, setLoadError] = useState("");
   const [searchText, setSearchText] = useState("");
   const [checkedInFilter, setCheckedInFilter] = useState<"all" | "true" | "false">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "accepted" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "accepted" | "rejected" | "waitlist">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [hackers, setHackers] = useState<HackerRow[]>([]);
+  const [showManualAdd, setShowManualAdd] = useState(false);
+  const [manualProfile, setManualProfile] = useState<ManualProfileForm>(EMPTY_MANUAL_PROFILE);
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualError, setManualError] = useState("");
+  const [manualSuccess, setManualSuccess] = useState("");
+  const [lastCreatedProfileId, setLastCreatedProfileId] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -169,6 +215,8 @@ function AdminHackersPage() {
               isCheckedIn: getBooleanByKeys(data, ["isCheckedIn", "checkedIn"]),
               status: toSafeString(data.status).trim().toLowerCase(),
               lastScannedAt: formatDateValue(data.lastScannedAt),
+              waitlistedAt: formatDateValue(data.waitlistedAt),
+              waitlistedAtEpoch: dateToEpoch(data.waitlistedAt),
               scanCount,
             };
           })
@@ -192,7 +240,7 @@ function AdminHackersPage() {
 
   const filteredHackers = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    return hackers.filter((hacker) => {
+    const filtered = hackers.filter((hacker) => {
       const matchesSearch =
         !query ||
         [hacker.displayName, hacker.email, hacker.id].some((candidate) =>
@@ -208,7 +256,27 @@ function AdminHackersPage() {
 
       return matchesSearch && matchesCheckedIn && matchesStatus;
     });
+
+    if (statusFilter === "waitlist") {
+      return [...filtered].sort((a, b) => {
+        if (a.waitlistedAtEpoch !== b.waitlistedAtEpoch) {
+          return a.waitlistedAtEpoch - b.waitlistedAtEpoch;
+        }
+        return a.displayName.localeCompare(b.displayName);
+      });
+    }
+
+    return filtered;
   }, [checkedInFilter, hackers, searchText, statusFilter]);
+
+  const waitlistOrderById = useMemo(() => {
+    const map = new Map<string, number>();
+    if (statusFilter !== "waitlist") return map;
+    filteredHackers.forEach((hacker, idx) => {
+      map.set(hacker.id, idx + 1);
+    });
+    return map;
+  }, [filteredHackers, statusFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -246,6 +314,104 @@ function AdminHackersPage() {
   const showingStart = filteredHackers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
   const showingEnd = Math.min(filteredHackers.length, currentPage * ITEMS_PER_PAGE);
   const canShowPagination = !loading && !loadError && filteredHackers.length > 0;
+
+  const setManualField = <K extends keyof ManualProfileForm,>(key: K, value: ManualProfileForm[K]) => {
+    setManualProfile((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const generateUniqueAccessCode = async (): Promise<string> => {
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const existing = await getDoc(doc(db, HACKERS_COLLECTION, code));
+      if (!existing.exists()) {
+        return code;
+      }
+    }
+    throw new Error("Unable to generate a unique 6-digit access code. Try again.");
+  };
+
+  const handleAddProfile = async () => {
+    const firstName = manualProfile.firstName.trim();
+    const lastName = manualProfile.lastName.trim();
+    const email = manualProfile.email.trim().toLowerCase();
+    const foodGroup = manualProfile.foodGroup.trim();
+    const phoneNumber = manualProfile.phoneNumber.trim();
+
+    setManualError("");
+    setManualSuccess("");
+    setLastCreatedProfileId("");
+
+    if (!firstName || !lastName) {
+      setManualError("First name and last name are required.");
+      return;
+    }
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setManualError("Please enter a valid email.");
+      return;
+    }
+    if (hackers.some((row) => row.email.trim().toLowerCase() === email)) {
+      setManualError("A profile with this email already exists.");
+      return;
+    }
+
+    setManualSaving(true);
+    try {
+      const accessCode = await generateUniqueAccessCode();
+      const payload: Record<string, unknown> = {
+        access_code: accessCode,
+        email,
+        fname: firstName,
+        lname: lastName,
+        status: manualProfile.status,
+        foodGroup: foodGroup || "",
+        hasLoggedin: false,
+        isCheckedIn: false,
+        breakfast: false,
+        dinner: false,
+        lunchd1: false,
+        lunchd2: false,
+        scanCount: 0,
+        scans: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      if (phoneNumber) {
+        payload.phone_number = phoneNumber;
+      }
+      if (manualProfile.status === "waitlist") {
+        payload.waitlistedAt = serverTimestamp();
+      }
+
+      await setDoc(doc(db, HACKERS_COLLECTION, accessCode), payload);
+
+      const nextRow: HackerRow = {
+        id: accessCode,
+        displayName: `${firstName} ${lastName}`.trim() || accessCode,
+        email,
+        hasLoggedIn: false,
+        isCheckedIn: false,
+        status: manualProfile.status,
+        lastScannedAt: "Not available",
+        waitlistedAt: manualProfile.status === "waitlist" ? new Date().toLocaleString() : "Not available",
+        waitlistedAtEpoch: manualProfile.status === "waitlist" ? Date.now() : 0,
+        scanCount: 0,
+      };
+
+      setHackers((prev) => [...prev, nextRow].sort((a, b) => a.displayName.localeCompare(b.displayName)));
+      setManualSuccess(
+        `Profile added for ${firstName} ${lastName}. Access code: ${accessCode}`
+      );
+      setLastCreatedProfileId(accessCode);
+      setManualProfile(EMPTY_MANUAL_PROFILE);
+      setCurrentPage(1);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to add profile.";
+      setManualError(message);
+    } finally {
+      setManualSaving(false);
+    }
+  };
 
   const renderPagination = (wrapperClassName: string) => (
     <div className={wrapperClassName}>
@@ -329,14 +495,106 @@ function AdminHackersPage() {
                 <h1 className="text-3xl font-bold">Admin Hackers</h1>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => router.push("/scanner")}
-              className="rounded-xl px-4 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
-            >
-              Go to Scanner
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowManualAdd((prev) => !prev)}
+                className="rounded-xl px-4 py-3 bg-[#3a1b56] text-white font-semibold transition hover:bg-[#5a2d84]"
+              >
+                {showManualAdd ? "Hide Manual Add" : "Manual Add Profile"}
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/scanner")}
+                className="rounded-xl px-4 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
+              >
+                Go to Scanner
+              </button>
+            </div>
           </div>
+
+          {showManualAdd && (
+            <div className="mb-5 rounded-2xl border border-white/20 bg-black/30 p-4 md:p-5">
+              <h2 className="text-lg font-semibold mb-3">Add Manual Hacker Profile</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">First Name</div>
+                  <input
+                    value={manualProfile.firstName}
+                    onChange={(e) => setManualField("firstName", e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  />
+                </label>
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Last Name</div>
+                  <input
+                    value={manualProfile.lastName}
+                    onChange={(e) => setManualField("lastName", e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  />
+                </label>
+                <label className="block md:col-span-2">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Email</div>
+                  <input
+                    value={manualProfile.email}
+                    onChange={(e) => setManualField("email", e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  />
+                </label>
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Status</div>
+                  <select
+                    value={manualProfile.status}
+                    onChange={(e) => setManualField("status", e.target.value as ManualStatus)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  >
+                    <option value="accepted" className="text-black">Accepted</option>
+                    <option value="rejected" className="text-black">Rejected</option>
+                    <option value="waitlist" className="text-black">Waitlist</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Food Group</div>
+                  <input
+                    value={manualProfile.foodGroup}
+                    onChange={(e) => setManualField("foodGroup", e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  />
+                </label>
+                <label className="block md:col-span-2">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Phone Number (Optional)</div>
+                  <input
+                    value={manualProfile.phoneNumber}
+                    onChange={(e) => setManualField("phoneNumber", e.target.value)}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                  />
+                </label>
+              </div>
+
+              {manualError && <div className="mt-3 text-sm text-red-300">{manualError}</div>}
+              {manualSuccess && <div className="mt-3 text-sm text-green-300">{manualSuccess}</div>}
+
+              <div className="mt-4 flex justify-end gap-2">
+                {lastCreatedProfileId && (
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/admin/hackers/${encodeURIComponent(lastCreatedProfileId)}`)}
+                    className="rounded-xl px-5 py-3 bg-black/40 border border-white/25 text-white font-semibold transition hover:bg-white/10"
+                  >
+                    Open New Profile
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAddProfile}
+                  disabled={manualSaving}
+                  className="rounded-xl px-5 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] disabled:opacity-60"
+                >
+                  {manualSaving ? "Adding..." : "Add Profile"}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="relative mb-5">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
@@ -366,12 +624,13 @@ function AdminHackersPage() {
               <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Status</div>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "accepted" | "rejected")}
+                onChange={(e) => setStatusFilter(e.target.value as "all" | "accepted" | "rejected" | "waitlist")}
                 className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
               >
                 <option value="all" className="text-black">All</option>
                 <option value="accepted" className="text-black">Accepted</option>
                 <option value="rejected" className="text-black">Rejected</option>
+                <option value="waitlist" className="text-black">Waitlist</option>
               </select>
             </label>
           </div>
@@ -422,12 +681,25 @@ function AdminHackersPage() {
                               ? "text-green-300"
                               : hacker.status === "rejected"
                                 ? "text-red-300"
+                                : hacker.status === "waitlist"
+                                  ? "text-yellow-300"
                                 : "text-gray-200"
                           }
                         >
                           {hacker.status || "unknown"}
                         </span>
                       </div>
+                      {statusFilter === "waitlist" && (
+                        <div className="text-xs text-gray-300 uppercase tracking-widest">
+                          Waitlist #:{" "}
+                          <span className="text-[#DDD059]">{waitlistOrderById.get(hacker.id) ?? "-"}</span>
+                        </div>
+                      )}
+                      {statusFilter === "waitlist" && (
+                        <div className="text-xs text-gray-300 hidden lg:block">
+                          Waitlisted At: <span className="text-gray-100">{hacker.waitlistedAt}</span>
+                        </div>
+                      )}
                       <div className="text-xs text-gray-300 uppercase tracking-widest">
                         Scans: <span className="text-[#DDD059]">{hacker.scanCount}</span>
                       </div>

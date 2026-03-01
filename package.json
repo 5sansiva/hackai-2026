@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "email:test-hacker": "node scripts/sendTestHackerEmail.js"
   },
   "dependencies": {
     "firebase": "^12.8.0",

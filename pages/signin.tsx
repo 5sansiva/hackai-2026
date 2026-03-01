@@ -15,7 +15,18 @@ import {
 } from "firebase/auth";
 import { isAdminEmail } from "@/utils/adminAccess";
 
-const HACKERS_COLLECTION = "testHackers";
+const HACKERS_COLLECTION = "hackers";
+type HackerMatch = { id: string; data: Record<string, unknown> & { hasLoggedin?: boolean; email?: string } };
+
+const getPhoneFromData = (data: Record<string, unknown>): string => {
+  const candidates = [data.phone_number, data.phoneNumber, data.phone];
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+  return "";
+};
 
 const SignIn = () => {
   const router = useRouter();
@@ -26,12 +37,12 @@ const SignIn = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const getHackersByEmail = useCallback(async (rawEmail: string) => {
+  const getHackersByEmail = useCallback(async (rawEmail: string): Promise<HackerMatch[]> => {
     const email = rawEmail.trim();
     if (!email) return [];
     const candidates = Array.from(new Set([email, email.toLowerCase()]));
     const seen = new Set<string>();
-    const matches: Array<{ id: string; data: { hasLoggedin?: boolean; email?: string } }> = [];
+    const matches: HackerMatch[] = [];
 
     for (const candidate of candidates) {
       const snap = await getDocs(
@@ -56,6 +67,14 @@ const SignIn = () => {
     if (matches.length === 0) return null;
     const registered = matches.find((item) => Boolean(item.data.hasLoggedin));
     return (registered ?? matches[0]).data;
+  }, [getHackersByEmail]);
+
+  const resolveUserDestination = useCallback(async (rawEmail: string): Promise<"/userProfile" | "/completeProfile"> => {
+    const matches = await getHackersByEmail(rawEmail);
+    if (matches.length === 0) return "/completeProfile";
+    const registered = matches.find((item) => Boolean(item.data.hasLoggedin)) ?? matches[0];
+    const hasPhone = Boolean(getPhoneFromData(registered.data));
+    return hasPhone ? "/userProfile" : "/completeProfile";
   }, [getHackersByEmail]);
 
   const hasRegisteredHackerByEmail = useCallback(async (rawEmail: string, excludeDocId?: string) => {
@@ -86,7 +105,8 @@ const SignIn = () => {
           return;
         }
         if (destination === "user") {
-          router.replace("/userProfile");
+          const nextRoute = await resolveUserDestination(user.email || "");
+          router.replace(nextRoute);
           return;
         }
         await signOut(auth);
@@ -99,7 +119,7 @@ const SignIn = () => {
       active = false;
       unsubscribe();
     };
-  }, [enforceAllowedLogin, router]);
+  }, [enforceAllowedLogin, resolveUserDestination, router]);
 
   // Focus next/prev input on change and handle backspace
   const handleChange = (idx: number, value: string) => {
@@ -127,36 +147,42 @@ const SignIn = () => {
     }
   };
 
-  // Validate code and fetch email
-  const validateCode = async () => {
-    if (code.join("").length !== 6) {
+  // Validate code and fetch linked applicant email
+  const validateCode = async (): Promise<{ ok: true; codeStr: string; applicantEmail: string } | { ok: false }> => {
+    const codeStr = code.join("");
+    if (codeStr.length !== 6) {
       setError("Please enter the 6-digit code.");
-      return false;
+      return { ok: false };
     }
     setError("");
     setLoading(true);
     try {
-      const codeStr = code.join("");
       const docRef = doc(db, HACKERS_COLLECTION, codeStr);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         setError("Invalid code. Please check and try again.");
         setLoading(false);
-        return false;
+        return { ok: false };
       }
       const data = docSnap.data();
       if (data.hasLoggedin && mode === "register") {
         setError("This code has already been used to register.");
         setLoading(false);
-        return false;
+        return { ok: false };
       }
-      setEmail(data.email || "");
+      const applicantEmail = String(data.email || "").trim().toLowerCase();
+      if (!applicantEmail) {
+        setError("No email is linked to this code.");
+        setLoading(false);
+        return { ok: false };
+      }
+      setEmail(applicantEmail);
       setLoading(false);
-      return true;
+      return { ok: true, codeStr, applicantEmail };
     } catch {
       setError("Error verifying code. Please try again.");
       setLoading(false);
-      return false;
+      return { ok: false };
     }
   };
 
@@ -164,10 +190,17 @@ const SignIn = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (mode === "register") {
-      const valid = await validateCode();
-      if (!valid) return;
-      const normalizedEmail = email.trim().toLowerCase();
       const codeStr = code.join("");
+      let normalizedEmail = "";
+
+      if (codeStr.length !== 6) {
+        setError("Please enter the 6-digit code to sign up.");
+        return;
+      }
+
+      const codeResult = await validateCode();
+      if (!codeResult.ok) return;
+      normalizedEmail = codeResult.applicantEmail;
 
       if (!/^[^@\s]+@gmail\.com$/.test(normalizedEmail)) {
         setError("Invalid email. Please use the one you used on the application.");
@@ -178,7 +211,13 @@ const SignIn = () => {
         return;
       }
 
-      if (await hasRegisteredHackerByEmail(normalizedEmail, codeStr)) {
+      const applicantMatches = await getHackersByEmail(normalizedEmail);
+      if (applicantMatches.length === 0) {
+        setError("This email was not found in applications. Please use the email you applied with.");
+        return;
+      }
+
+      if (await hasRegisteredHackerByEmail(normalizedEmail, codeStr.length === 6 ? codeStr : undefined)) {
         setError("This email already has an account. Please sign in instead.");
         return;
       }
@@ -197,9 +236,11 @@ const SignIn = () => {
       setLoading(true);
       try {
         await createUserWithEmailAndPassword(auth, normalizedEmail, password);
-        // No email verification required, allow immediate login
-        const docRef = doc(db, HACKERS_COLLECTION, codeStr);
-        await updateDoc(docRef, { hasLoggedin: true });
+        await Promise.all(
+          applicantMatches.map((match) =>
+            updateDoc(doc(db, HACKERS_COLLECTION, match.id), { hasLoggedin: true })
+          )
+        );
         alert("Account created! You can now log in.");
         window.location.href = "/signin";
       } catch (err: unknown) {
@@ -226,7 +267,8 @@ const SignIn = () => {
         if (destination === "admin") {
           router.replace("/admin/hackers");
         } else if (destination === "user") {
-          router.replace("/userProfile");
+          const nextRoute = await resolveUserDestination(result.user.email || email);
+          router.replace(nextRoute);
         } else {
           await signOut(auth);
           setError("No account found. Please sign up first using your 6-digit code.");
@@ -293,7 +335,12 @@ const SignIn = () => {
         return;
       }
 
-      router.replace(destination === "admin" ? "/admin/hackers" : "/userProfile");
+      if (destination === "admin") {
+        router.replace("/admin/hackers");
+      } else {
+        const nextRoute = await resolveUserDestination(email);
+        router.replace(nextRoute);
+      }
     } catch (err: unknown) {
       const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : "";
       if (code === "auth/popup-closed-by-user") {
@@ -312,9 +359,9 @@ const SignIn = () => {
     setError("");
 
     const valid = await validateCode();
-    if (!valid) return;
+    if (!valid.ok) return;
 
-    const codeStr = code.join("");
+    const codeStr = valid.codeStr;
     let expectedEmail = "";
     try {
       const codeSnap = await getDoc(doc(db, HACKERS_COLLECTION, codeStr));
@@ -385,7 +432,7 @@ const SignIn = () => {
       }
 
       await updateDoc(doc(db, HACKERS_COLLECTION, codeStr), { hasLoggedin: true });
-      router.replace("/userProfile");
+      router.replace("/completeProfile");
     } catch (err: unknown) {
       const code =
         typeof err === "object" && err !== null && "code" in err
@@ -447,14 +494,16 @@ const SignIn = () => {
             ) : (
               <>
                 Don&apos;t have an account?{" "}
-                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("register")}>Sign up with code</span>
+                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("register")}>Sign up</span>
               </>
             )}
           </div>
           {/* 6-digit code input */}
           {mode === "register" && (
             <div className="w-full mb-4">
-              <label className="block mb-2 text-left text-gray-300 font-semibold">Enter 6-digit login code</label>
+              <label className="block mb-2 text-left text-gray-300 font-semibold">
+                Enter 6-digit login code (required)
+              </label>
               <div className="flex gap-1 w-full" style={{flexWrap: 'nowrap', overflowX: 'auto', justifyContent: 'flex-start'}}>
                 {code.map((digit, idx) => (
                   <input
@@ -468,7 +517,6 @@ const SignIn = () => {
                     onChange={e => handleChange(idx, e.target.value)}
                     onKeyDown={e => handleKeyDown(idx, e)}
                     onFocus={e => e.target.select()}
-                    required
                   />
                 ))}
               </div>
