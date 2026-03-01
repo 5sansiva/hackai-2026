@@ -15,7 +15,8 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
-import { db } from "@/firebase/clientApp";
+import { auth, db } from "@/firebase/clientApp";
+import { isAdminEmail } from "@/utils/adminAccess";
 
 type EditableType = "string" | "number" | "boolean" | "null";
 
@@ -208,13 +209,10 @@ function HackerAdminDetailPage() {
   const [scanRows, setScanRows] = useState<HackerScan[]>([]);
 
   useEffect(() => {
-    const syncAdminState = () => {
-      setIsAdmin(localStorage.getItem("hackai_admin") === "true");
-    };
-
-    syncAdminState();
-    window.addEventListener("storage", syncAdminState);
-    return () => window.removeEventListener("storage", syncAdminState);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAdmin(isAdminEmail(user?.email));
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

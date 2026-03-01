@@ -1,11 +1,21 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/router";
 import { db, auth } from "@/firebase/clientApp";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { collection, doc, getDoc, getDocs, limit, query, updateDoc, where } from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  fetchSignInMethodsForEmail,
+  getAdditionalUserInfo,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
+import { isAdminEmail } from "@/utils/adminAccess";
 
-const ADMIN_BYPASS_CODE = "000000";
+const HACKERS_COLLECTION = "testHackers";
 
 const SignIn = () => {
   const router = useRouter();
@@ -14,28 +24,82 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"register" | "login">("login");
   const [error, setError] = useState("");
-  const [codeDocId, setCodeDocId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const adminBypassTriggeredRef = useRef(false);
+
+  const getHackersByEmail = useCallback(async (rawEmail: string) => {
+    const email = rawEmail.trim();
+    if (!email) return [];
+    const candidates = Array.from(new Set([email, email.toLowerCase()]));
+    const seen = new Set<string>();
+    const matches: Array<{ id: string; data: { hasLoggedin?: boolean; email?: string } }> = [];
+
+    for (const candidate of candidates) {
+      const snap = await getDocs(
+        query(collection(db, HACKERS_COLLECTION), where("email", "==", candidate), limit(25))
+      );
+
+      for (const docSnap of snap.docs) {
+        if (seen.has(docSnap.id)) continue;
+        seen.add(docSnap.id);
+        matches.push({
+          id: docSnap.id,
+          data: docSnap.data() as { hasLoggedin?: boolean; email?: string },
+        });
+      }
+    }
+
+    return matches;
+  }, []);
+
+  const findHackerByEmail = useCallback(async (rawEmail: string) => {
+    const matches = await getHackersByEmail(rawEmail);
+    if (matches.length === 0) return null;
+    const registered = matches.find((item) => Boolean(item.data.hasLoggedin));
+    return (registered ?? matches[0]).data;
+  }, [getHackersByEmail]);
+
+  const hasRegisteredHackerByEmail = useCallback(async (rawEmail: string, excludeDocId?: string) => {
+    const matches = await getHackersByEmail(rawEmail);
+    return matches.some((item) => item.id !== excludeDocId && Boolean(item.data.hasLoggedin));
+  }, [getHackersByEmail]);
+
+  const enforceAllowedLogin = useCallback(async (rawEmail: string): Promise<"admin" | "user" | "blocked"> => {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email) return "blocked";
+    if (isAdminEmail(email)) return "admin";
+
+    const hacker = await findHackerByEmail(email);
+    if (hacker?.hasLoggedin) return "user";
+    return "blocked";
+  }, [findHackerByEmail]);
 
   // Redirect if already logged in
   useEffect(() => {
+    let active = true;
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        router.replace("/userProfile");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+      const syncRoute = async () => {
+        if (!user) return;
+        const destination = await enforceAllowedLogin(user.email || "");
+        if (!active) return;
+        if (destination === "admin") {
+          router.replace("/admin/hackers");
+          return;
+        }
+        if (destination === "user") {
+          router.replace("/userProfile");
+          return;
+        }
+        await signOut(auth);
+        setError("No account found. Please sign up first using your 6-digit code.");
+      };
 
-  useEffect(() => {
-    if (mode !== "register") return;
-    if (adminBypassTriggeredRef.current) return;
-    if (code.join("") !== ADMIN_BYPASS_CODE) return;
-    adminBypassTriggeredRef.current = true;
-    localStorage.setItem("hackai_admin", "true");
-    router.replace("/");
-  }, [code, mode, router]);
+      void syncRoute();
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [enforceAllowedLogin, router]);
 
   // Focus next/prev input on change and handle backspace
   const handleChange = (idx: number, value: string) => {
@@ -73,14 +137,7 @@ const SignIn = () => {
     setLoading(true);
     try {
       const codeStr = code.join("");
-      if (codeStr === ADMIN_BYPASS_CODE) {
-        localStorage.setItem("hackai_admin", "true");
-        setLoading(false);
-        router.replace("/");
-        return false;
-      }
-
-      const docRef = doc(db, "hackers", codeStr);
+      const docRef = doc(db, HACKERS_COLLECTION, codeStr);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         setError("Invalid code. Please check and try again.");
@@ -93,7 +150,6 @@ const SignIn = () => {
         setLoading(false);
         return false;
       }
-      setCodeDocId(codeStr);
       setEmail(data.email || "");
       setLoading(false);
       return true;
@@ -110,7 +166,10 @@ const SignIn = () => {
     if (mode === "register") {
       const valid = await validateCode();
       if (!valid) return;
-      if (!/^[^@\s]+@gmail\.com$/.test(email)) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const codeStr = code.join("");
+
+      if (!/^[^@\s]+@gmail\.com$/.test(normalizedEmail)) {
         setError("Invalid email. Please use the one you used on the application.");
         return;
       }
@@ -118,15 +177,29 @@ const SignIn = () => {
         setError("Password must be at least 6 characters.");
         return;
       }
+
+      if (await hasRegisteredHackerByEmail(normalizedEmail, codeStr)) {
+        setError("This email already has an account. Please sign in instead.");
+        return;
+      }
+
+      const existingMethods = await fetchSignInMethodsForEmail(auth, normalizedEmail);
+      if (existingMethods.length > 0) {
+        if (existingMethods.includes("google.com") && !existingMethods.includes("password")) {
+          setError("This email is already registered with Google. Use Sign in with Google.");
+        } else {
+          setError("This email already has an account. Please sign in instead.");
+        }
+        return;
+      }
+
       setError("");
       setLoading(true);
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        await createUserWithEmailAndPassword(auth, normalizedEmail, password);
         // No email verification required, allow immediate login
-        if (codeDocId) {
-          const docRef = doc(db, "hackers", codeDocId);
-          await updateDoc(docRef, { hasLoggedin: true });
-        }
+        const docRef = doc(db, HACKERS_COLLECTION, codeStr);
+        await updateDoc(docRef, { hasLoggedin: true });
         alert("Account created! You can now log in.");
         window.location.href = "/signin";
       } catch (err: unknown) {
@@ -136,8 +209,9 @@ const SignIn = () => {
       setLoading(false);
     } else {
       // Login mode
-      if (!/^[^@\s]+@gmail\.com$/.test(email)) {
-        setError("Invalid email. Please use the one you used on the application.");
+      const normalizedEmail = email.trim().toLowerCase();
+      if (!isAdminEmail(normalizedEmail) && !/^[^@\s]+@gmail\.com$/.test(normalizedEmail)) {
+        setError("Invalid email. Use a Gmail account or the admin email.");
         return;
       }
       if (password.length < 6) {
@@ -147,17 +221,186 @@ const SignIn = () => {
       setError("");
       setLoading(true);
       try {
-        await signInWithEmailAndPassword(auth, email, password);
-        router.replace("/userProfile");
-      } catch (err: any) {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        const destination = await enforceAllowedLogin(result.user.email || email);
+        if (destination === "admin") {
+          router.replace("/admin/hackers");
+        } else if (destination === "user") {
+          router.replace("/userProfile");
+        } else {
+          await signOut(auth);
+          setError("No account found. Please sign up first using your 6-digit code.");
+        }
+      } catch (err: unknown) {
         let message = "Error signing in. Try again.";
-        if (err && err.code === "auth/invalid-credential") {
+        const code =
+          typeof err === "object" && err !== null && "code" in err
+            ? String((err as { code: unknown }).code)
+            : "";
+        if (code === "auth/user-not-found") {
+          message = "No account found. Please sign up first using your 6-digit code.";
+        } else if (code === "auth/invalid-credential") {
           message = "Invalid password or credentials.";
         }
         setError(message);
       }
       setLoading(false);
     }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const result = await signInWithPopup(auth, provider);
+      const email = (result.user.email || "").toLowerCase();
+      const adminEmail = isAdminEmail(email);
+
+      if (!adminEmail && !/^[^@\s]+@gmail\.com$/.test(email)) {
+        await signOut(auth);
+        setError("Please sign in with a Gmail account or the admin email.");
+        setLoading(false);
+        return;
+      }
+
+      const additionalInfo = getAdditionalUserInfo(result);
+      const destination = await enforceAllowedLogin(email);
+      if (destination === "blocked") {
+        if (additionalInfo?.isNewUser) {
+          try {
+            await deleteUser(result.user);
+          } catch {
+            await signOut(auth);
+          }
+        } else {
+          await signOut(auth);
+        }
+        setError("No account found. Please sign up first using your 6-digit code.");
+        setLoading(false);
+        return;
+      }
+
+      if (additionalInfo?.isNewUser && !adminEmail) {
+        try {
+          await deleteUser(result.user);
+        } catch {
+          await signOut(auth);
+        }
+        setError("No account found. Please sign up first using your 6-digit code.");
+        setLoading(false);
+        return;
+      }
+
+      router.replace(destination === "admin" ? "/admin/hackers" : "/userProfile");
+    } catch (err: unknown) {
+      const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : "";
+      if (code === "auth/popup-closed-by-user") {
+        setError("Google sign-in was cancelled.");
+      } else if (code === "auth/account-exists-with-different-credential") {
+        setError("This email already exists with password sign-in. Please use email and password.");
+      } else {
+        const message = err instanceof Error ? err.message : "Error signing in with Google. Try again.";
+        setError(message);
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleRegister = async () => {
+    setError("");
+
+    const valid = await validateCode();
+    if (!valid) return;
+
+    const codeStr = code.join("");
+    let expectedEmail = "";
+    try {
+      const codeSnap = await getDoc(doc(db, HACKERS_COLLECTION, codeStr));
+      expectedEmail = String(codeSnap.data()?.email || "").trim().toLowerCase();
+    } catch {
+      setError("Unable to verify code email. Please try again.");
+      return;
+    }
+
+    if (!/^[^@\s]+@gmail\.com$/.test(expectedEmail)) {
+      setError("This code is not linked to a valid Gmail account.");
+      return;
+    }
+
+    if (await hasRegisteredHackerByEmail(expectedEmail, codeStr)) {
+      setError("This email already has an account. Please sign in instead.");
+      return;
+    }
+
+    const existingMethods = await fetchSignInMethodsForEmail(auth, expectedEmail);
+    if (existingMethods.length > 0) {
+      if (existingMethods.includes("password")) {
+        setError("This email is already registered with email/password. Please sign in.");
+      } else if (existingMethods.includes("google.com")) {
+        setError("This email already has a Google account. Please use Sign in with Google.");
+      } else {
+        setError("This email already has an account. Please sign in instead.");
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      const result = await signInWithPopup(auth, provider);
+      const googleEmail = (result.user.email || "").toLowerCase();
+      const additionalInfo = getAdditionalUserInfo(result);
+      const isNewUser = Boolean(additionalInfo?.isNewUser);
+
+      if (!/^[^@\s]+@gmail\.com$/.test(googleEmail)) {
+        if (isNewUser) {
+          await deleteUser(result.user);
+        } else {
+          await signOut(auth);
+        }
+        setError("Please sign up with a Gmail account.");
+        setLoading(false);
+        return;
+      }
+
+      if (googleEmail !== expectedEmail) {
+        if (isNewUser) {
+          await deleteUser(result.user);
+        } else {
+          await signOut(auth);
+        }
+        setError(`This code is linked to ${expectedEmail}. Please use that Gmail account.`);
+        setLoading(false);
+        return;
+      }
+
+      if (!isNewUser) {
+        await signOut(auth);
+        setError("Google account already exists. Use Sign in with Google on the sign-in view.");
+        setLoading(false);
+        return;
+      }
+
+      await updateDoc(doc(db, HACKERS_COLLECTION, codeStr), { hasLoggedin: true });
+      router.replace("/userProfile");
+    } catch (err: unknown) {
+      const code =
+        typeof err === "object" && err !== null && "code" in err
+          ? String((err as { code: unknown }).code)
+          : "";
+      if (code === "auth/popup-closed-by-user") {
+        setError("Google sign-up was cancelled.");
+      } else if (code === "auth/account-exists-with-different-credential") {
+        setError("This email already exists with password sign-in. Please use email and password.");
+      } else {
+        const message = err instanceof Error ? err.message : "Error signing up with Google. Try again.";
+        setError(message);
+      }
+    }
+    setLoading(false);
   };
 
   return (
@@ -230,6 +473,36 @@ const SignIn = () => {
                 ))}
               </div>
             </div>
+          )}
+          {mode === "register" && (
+            <>
+              <button
+                type="button"
+                onClick={handleGoogleRegister}
+                className="mb-4 w-full py-3 rounded-lg bg-white text-black font-semibold text-lg hover:bg-gray-200 transition disabled:opacity-70"
+                disabled={loading}
+              >
+                {loading ? "Loading..." : "Sign up with Google"}
+              </button>
+              <div className="w-full text-center text-gray-300 text-sm mb-4 uppercase tracking-wider">
+                or create with email and password
+              </div>
+            </>
+          )}
+          {mode === "login" && (
+            <>
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                className="mb-4 w-full py-3 rounded-lg bg-white text-black font-semibold text-lg hover:bg-gray-200 transition disabled:opacity-70"
+                disabled={loading}
+              >
+                {loading ? "Loading..." : "Continue with Google"}
+              </button>
+              <div className="w-full text-center text-gray-300 text-sm mb-4 uppercase tracking-wider">
+                or sign in with email
+              </div>
+            </>
           )}
           {/* Email input (editable for both modes) */}
           <input

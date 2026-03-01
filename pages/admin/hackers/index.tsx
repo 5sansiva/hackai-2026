@@ -4,7 +4,8 @@ import { useRouter } from "next/router";
 import { FaChevronRight, FaSearch, FaUsers, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import { Timestamp, collection, getDocs } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
-import { db } from "@/firebase/clientApp";
+import { auth, db } from "@/firebase/clientApp";
+import { isAdminEmail } from "@/utils/adminAccess";
 
 type HackerRow = {
   id: string;
@@ -109,13 +110,10 @@ function AdminHackersPage() {
   const [hackers, setHackers] = useState<HackerRow[]>([]);
 
   useEffect(() => {
-    const syncAdminState = () => {
-      setIsAdmin(localStorage.getItem("hackai_admin") === "true");
-    };
-
-    syncAdminState();
-    window.addEventListener("storage", syncAdminState);
-    return () => window.removeEventListener("storage", syncAdminState);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAdmin(isAdminEmail(user?.email));
+    });
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

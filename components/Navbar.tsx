@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "@/firebase/clientApp";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
+import { isAdminEmail } from "@/utils/adminAccess";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -14,18 +15,9 @@ const Navbar = () => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsLoggedIn(!!user);
+      setIsAdmin(isAdminEmail(user?.email));
     });
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const syncAdminState = () => {
-      setIsAdmin(localStorage.getItem("hackai_admin") === "true");
-    };
-
-    syncAdminState();
-    window.addEventListener("storage", syncAdminState);
-    return () => window.removeEventListener("storage", syncAdminState);
   }, []);
 
   const NAV = [
@@ -195,8 +187,6 @@ const Navbar = () => {
                   className="rounded-full px-4 py-3 ml-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] tracking-widest"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    localStorage.removeItem("hackai_admin");
-                    setIsAdmin(false);
                     if (isLoggedIn) {
                       await auth.signOut();
                     }
@@ -329,8 +319,6 @@ const Navbar = () => {
                   className="rounded-xl px-4 py-3 mt-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] w-full"
                   style={{ fontFamily: "Street Flow NYC" }}
                   onClick={async () => {
-                    localStorage.removeItem("hackai_admin");
-                    setIsAdmin(false);
                     if (isLoggedIn) {
                       await auth.signOut();
                     }
