@@ -149,8 +149,11 @@ const SignIn = () => {
       try {
         await signInWithEmailAndPassword(auth, email, password);
         router.replace("/userProfile");
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Error signing in. Try again.";
+      } catch (err: any) {
+        let message = "Error signing in. Try again.";
+        if (err && err.code === "auth/invalid-credential") {
+          message = "Invalid password or credentials.";
+        }
         setError(message);
       }
       setLoading(false);
@@ -174,7 +177,7 @@ const SignIn = () => {
           }}
         />
         <div
-          className="rounded-2xl shadow-xl py-8 flex flex-col items-center relative z-10 text-white mt-56 md:mt-64"
+          className="rounded-2xl shadow-xl py-8 flex flex-col items-center relative z-10 text-white md:mt-4"
           style={{
             maxWidth: '650px',
             minWidth: '320px',
@@ -209,7 +212,7 @@ const SignIn = () => {
           {mode === "register" && (
             <div className="w-full mb-4">
               <label className="block mb-2 text-left text-gray-300 font-semibold">Enter 6-digit login code</label>
-              <div className="flex gap-3 justify-start w-full pl-1">
+              <div className="flex gap-1 w-full" style={{flexWrap: 'nowrap', overflowX: 'auto', justifyContent: 'flex-start'}}>
                 {code.map((digit, idx) => (
                   <input
                     key={idx}
@@ -217,7 +220,7 @@ const SignIn = () => {
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
-                    className={`w-12 h-14 text-2xl text-center border-2 rounded-lg focus:outline-none transition-all bg-black/60 ${digit ? "border-green-500" : "border-gray-400"}`}
+                    className={`w-10 h-12 text-lg text-center border-2 rounded-lg focus:outline-none transition-all bg-black/60 ${digit ? "border-green-500" : "border-gray-400"} sm:w-12 sm:h-14 w-8 h-10 text-base min-w-[2.2rem]`}
                     value={digit}
                     onChange={e => handleChange(idx, e.target.value)}
                     onKeyDown={e => handleKeyDown(idx, e)}
