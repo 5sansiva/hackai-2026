@@ -8,6 +8,7 @@ import TracksPage from "./Tracks";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SponsorsSection from "./Sponsors";
+import ScheduleSection from "./schedule";
 
 const Countdown = dynamic(() => import("./countdown"), { ssr: false });
 const KeynoteSpeaker = dynamic(() => import("@/components/KeynoteSpeaker"), { ssr: false });
@@ -80,6 +81,10 @@ export default function HackAIPage() {
           <section id="stats" className="relative min-h-screen flex items-center justify-center mb-10">
             <Stats />
             
+          </section>
+
+          <section id="schedule" className="relative min-h-screen flex items-center justify-center mb-10">
+            <ScheduleSection />
           </section>
 
           <div
