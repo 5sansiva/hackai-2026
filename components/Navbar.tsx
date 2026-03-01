@@ -139,8 +139,7 @@ const Navbar = () => {
               </button>
             )}
 
-            {/* Sign In/Out button for desktop */}
-            {/* {isLoggedIn || isAdmin ? (
+            {isLoggedIn || isAdmin ? (
               <>
                 {isLoggedIn && (
                   <button
@@ -174,7 +173,7 @@ const Navbar = () => {
               >
                 Sign In
               </button>
-            )} */}
+            )} 
           </div>
 
           <div className="flex items-center gap-6">
@@ -248,13 +247,13 @@ const Navbar = () => {
       {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
       <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
         <div
-          className={`mt-3 overflow-hidden rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
+          className={`mt-3 overflow-y-auto rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
             open
-              ? "max-h-80 opacity-100 pointer-events-auto"
+              ? "max-h-[420px] opacity-100 pointer-events-auto"
               : "max-h-0 opacity-0 pointer-events-none"
           }`}
         >
-          <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="px-6 py-5 flex flex-col gap-3">
             {NAV.map((item) => (
               <button
                 key={item.id}
