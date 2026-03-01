@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "@/firebase/clientApp";
 import { FaInstagram, FaDiscord, FaLinkedin } from "react-icons/fa";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const adminMenuRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -72,6 +74,18 @@ const Navbar = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  useEffect(() => {
+    const closeOnOutsideClick = (e: MouseEvent) => {
+      if (!adminMenuRef.current) return;
+      if (!adminMenuRef.current.contains(e.target as Node)) {
+        setAdminMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <nav
@@ -126,19 +140,45 @@ const Navbar = () => {
             ))}
 
             {isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  router.push("/scanner");
-                  setOpen(false);
-                }}
-                className="py-2 text-[#DDD059] cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-white tracking-widest"
-                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black", paintOrder: "stroke" }}
-              >
-                SCANNER
-              </button>
+              <div className="relative" ref={adminMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setAdminMenuOpen((v) => !v)}
+                  className="py-2 text-[#DDD059] cursor-pointer flex justify-center rounded-[20px] bg-transparent transition-colors duration-500 ease-in-out hover:text-white tracking-widest"
+                  style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "2px black", paintOrder: "stroke" }}
+                >
+                  ADMIN
+                </button>
+                {adminMenuOpen && (
+                  <div className="absolute right-0 mt-2 min-w-44 rounded-xl border border-white/20 bg-black/85 backdrop-blur-md p-2 shadow-2xl z-50">
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        router.push("/scanner");
+                        setAdminMenuOpen(false);
+                        setOpen(false);
+                      }}
+                    >
+                      Scanner
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10"
+                      onClick={() => {
+                        router.push("/admin/hackers");
+                        setAdminMenuOpen(false);
+                        setOpen(false);
+                      }}
+                    >
+                      Hackers
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
 
+            {/* Sign In/Out button for desktop */}
             {isLoggedIn || isAdmin ? (
               <>
                 {isLoggedIn && (
@@ -173,7 +213,7 @@ const Navbar = () => {
               >
                 Sign In
               </button>
-            )} 
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -314,17 +354,36 @@ const Navbar = () => {
             )}
 
             {isAdmin && (
-              <button
-                type="button"
-                className="rounded-xl px-4 py-3 mt-2 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
-                style={{ fontFamily: "Street Flow NYC" }}
-                onClick={() => {
-                  router.push("/scanner");
-                  setOpen(false);
-                }}
-              >
-                Scanner
-              </button>
+              <div className="rounded-xl border border-[#DDD059]/35 bg-[#DDD059]/10 p-3 mt-2">
+                <div
+                  className="text-xs uppercase tracking-widest text-[#DDD059] mb-2"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                >
+                  Admin
+                </div>
+                <button
+                  type="button"
+                  className="rounded-xl px-4 py-3 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => {
+                    router.push("/scanner");
+                    setOpen(false);
+                  }}
+                >
+                  Scanner
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl px-4 py-3 mt-2 bg-[#DDD059] text-black font-semibold transition hover:bg-[#f4ea83] w-full"
+                  style={{ fontFamily: "Street Flow NYC" }}
+                  onClick={() => {
+                    router.push("/admin/hackers");
+                    setOpen(false);
+                  }}
+                >
+                  Hackers
+                </button>
+              </div>
             )}
 
             {/* Socials for mobile */}
