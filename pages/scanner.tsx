@@ -2,6 +2,20 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { FaQrcode, FaHistory, FaCamera, FaStop } from "react-icons/fa";
+import { db } from "@/firebase/clientApp";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  limit,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 
 type ScanMode =
   | "check-in"
@@ -29,6 +43,14 @@ type QRDetector = {
 type QRDetectorConstructor = new (opts?: { formats?: string[] }) => QRDetector;
 
 const SCAN_STORAGE_KEY = "hackai_scanner_records";
+const HACKERS_COLLECTION = "testHackers";
+const MODE_TO_HACKER_FIELD: Record<ScanMode, string> = {
+  "check-in": "isCheckedIn",
+  "saturday-lunch": "lunch1",
+  "sunday-lunch": "lunch2",
+  dinner: "dinner",
+  breakfast: "breakfast",
+};
 
 const SCAN_MODES: { value: ScanMode; label: string; help: string }[] = [
   { value: "check-in", label: "Check In", help: "Use for event check in." },
@@ -65,6 +87,7 @@ function ScannerPage() {
   const loopTimerRef = useRef<number | null>(null);
   const lastScanRef = useRef<{ value: string; at: number }>({ value: "", at: 0 });
   const isDetectingRef = useRef(false);
+  const hackerIdCacheRef = useRef<Record<string, string>>({});
 
   useEffect(() => {
     if (!isAdmin) {
@@ -98,12 +121,98 @@ function ScannerPage() {
     [counts]
   );
 
+  const findHackerIdByQrValue = useCallback(async (rawValue: string): Promise<string | null> => {
+    const trimmed = rawValue.trim();
+    if (!trimmed) return null;
+
+    const lower = trimmed.toLowerCase();
+    if (hackerIdCacheRef.current[lower]) {
+      return hackerIdCacheRef.current[lower];
+    }
+
+    const hackersRef = collection(db, HACKERS_COLLECTION);
+
+    const lowerMatchSnap = await getDocs(
+      query(hackersRef, where("email", "==", lower), limit(1))
+    );
+    if (!lowerMatchSnap.empty) {
+      const hackerId = lowerMatchSnap.docs[0].id;
+      hackerIdCacheRef.current[lower] = hackerId;
+      return hackerId;
+    }
+
+    if (trimmed !== lower) {
+      const exactMatchSnap = await getDocs(
+        query(hackersRef, where("email", "==", trimmed), limit(1))
+      );
+      if (!exactMatchSnap.empty) {
+        const hackerId = exactMatchSnap.docs[0].id;
+        hackerIdCacheRef.current[lower] = hackerId;
+        return hackerId;
+      }
+    }
+
+    const idMatchSnap = await getDoc(doc(db, HACKERS_COLLECTION, trimmed));
+    if (idMatchSnap.exists()) {
+      hackerIdCacheRef.current[lower] = idMatchSnap.id;
+      return idMatchSnap.id;
+    }
+
+    return null;
+  }, []);
+
+  const persistScanToFirestore = useCallback(
+    async (record: ScanRecord) => {
+      try {
+        const hackerId = await findHackerIdByQrValue(record.value);
+        if (!hackerId) {
+          setStatus({
+            tone: "error",
+            text: `Scan saved locally, but no hacker was found in ${HACKERS_COLLECTION} for "${record.value}".`,
+          });
+          return;
+        }
+
+        await addDoc(collection(db, HACKERS_COLLECTION, hackerId, "scans"), {
+          mode: record.mode,
+          value: record.value,
+          scannedAt: serverTimestamp(),
+          createdAtLabel: record.createdAt,
+        });
+
+        const targetField = MODE_TO_HACKER_FIELD[record.mode];
+        const updates: Record<string, unknown> = {
+          lastScannedAt: serverTimestamp(),
+          scanCount: increment(1),
+        };
+        if (targetField) {
+          updates[targetField] = true;
+        }
+
+        await updateDoc(doc(db, HACKERS_COLLECTION, hackerId), updates);
+
+        const modeLabel = SCAN_MODES.find((item) => item.value === record.mode)?.label ?? record.mode;
+        setStatus({
+          tone: "success",
+          text: `Scan successful: ${modeLabel} -> ${record.value} (updated ${targetField} in Firebase).`,
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to save scan to Firebase.";
+        setStatus({
+          tone: "error",
+          text: `Scan saved locally, but Firebase save failed: ${message}`,
+        });
+      }
+    },
+    [findHackerIdByQrValue]
+  );
+
   const addScanRecord = useCallback(
-    (value: string): boolean => {
+    (value: string): ScanRecord | null => {
       const trimmed = value.trim();
       if (!trimmed) {
         setStatus({ tone: "error", text: "Scan failed: no QR value detected." });
-        return false;
+        return null;
       }
 
       const now = new Date();
@@ -118,9 +227,9 @@ function ScannerPage() {
       setScanValue("");
       setStatus({
         tone: "success",
-        text: `Scan successful: ${selectedMode.label} -> ${trimmed}`,
+        text: `Scan successful: ${selectedMode.label} -> ${trimmed} (saving to Firebase...)`,
       });
-      return true;
+      return record;
     },
     [mode, selectedMode.label]
   );
@@ -172,7 +281,10 @@ function ScannerPage() {
           rawValue === lastScanRef.current.value && nowMs - lastScanRef.current.at < 1500;
         if (!isSameAsLast) {
           lastScanRef.current = { value: rawValue, at: nowMs };
-          addScanRecord(rawValue);
+          const record = addScanRecord(rawValue);
+          if (record) {
+            void persistScanToFirestore(record);
+          }
         } else {
           setStatus({
             tone: "info",
@@ -188,7 +300,7 @@ function ScannerPage() {
         void tickDetect();
       }, 220);
     }
-  }, [addScanRecord]);
+  }, [addScanRecord, persistScanToFirestore]);
 
   const startScanner = useCallback(async () => {
     setScannerError("");
@@ -250,7 +362,7 @@ function ScannerPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1a0033] via-[#2d0a4b] to-[#0f051d] text-white">
-      <div className="px-5 md:px-10 pt-6">
+      <div className="px-5 md:px-10 pt-6 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => router.push("/")}
@@ -262,6 +374,13 @@ function ScannerPage() {
             alt="HackAI"
             className="object-contain w-full h-full"
           />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push("/admin/hackers")}
+          className="rounded-xl px-4 py-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
+        >
+          Hackers
         </button>
       </div>
 
@@ -347,7 +466,12 @@ function ScannerPage() {
 
           <button
             type="button"
-            onClick={() => addScanRecord(scanValue)}
+            onClick={() => {
+              const record = addScanRecord(scanValue);
+              if (record) {
+                void persistScanToFirestore(record);
+              }
+            }}
             className="w-full rounded-xl px-4 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a]"
           >
             Save Manual Scan

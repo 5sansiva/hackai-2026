@@ -12,7 +12,7 @@ const SignIn = () => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"register" | "login">("register");
+  const [mode, setMode] = useState<"register" | "login">("login");
   const [error, setError] = useState("");
   const [codeDocId, setCodeDocId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -190,7 +190,7 @@ const SignIn = () => {
           <div className="w-full px-4 md:px-8">
             <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
           <h2 className="text-3xl font-bold mb-2 text-center">
-            {mode === "register" ? "Create an account" : "Login"}
+            {mode === "register" ? "Create an account" : "Sign in with Gmail"}
           </h2>
           <div className="mb-2 text-center text-gray-400">
             {mode === "register" ? (
@@ -201,7 +201,7 @@ const SignIn = () => {
             ) : (
               <>
                 Don&apos;t have an account?{" "}
-                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("register")}>Create one</span>
+                <span className="text-green-300 cursor-pointer underline" onClick={() => setMode("register")}>Sign up with code</span>
               </>
             )}
           </div>
