@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
-import { FaChevronRight, FaSearch, FaUsers, FaAngleLeft, FaAngleRight } from "react-icons/fa";
+import { FaChevronDown, FaChevronRight, FaSearch, FaUsers, FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import { Timestamp, collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/firebase/clientApp";
@@ -11,6 +11,7 @@ type HackerRow = {
   id: string;
   displayName: string;
   email: string;
+  phoneNumber: string;
   hasLoggedIn: boolean;
   isCheckedIn: boolean;
   status: string;
@@ -202,6 +203,8 @@ function AdminHackersPage() {
   const [assigningFoodGroups, setAssigningFoodGroups] = useState(false);
   const [foodGroupResult, setFoodGroupResult] = useState("");
   const [foodGroupError, setFoodGroupError] = useState("");
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -215,6 +218,16 @@ function AdminHackersPage() {
       router.replace("/signin");
     }
   }, [isAdmin, router]);
+
+  useEffect(() => {
+    const closeOnOutsideClick = (e: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(e.target as Node)) {
+        setActionsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
 
   useEffect(() => {
     if (isAdmin !== true) return;
@@ -247,6 +260,7 @@ function AdminHackersPage() {
                 id: docSnap.id,
                 displayName: getDisplayName(docSnap.id, data),
                 email: toSafeString(data.email),
+                phoneNumber: getStringByKeys(data, ["phoneNumber", "phone_number", "phone"]),
                 hasLoggedIn: Boolean(data.hasLoggedIn) || Boolean(data.hasLoggedin),
                 isCheckedIn: getBooleanByKeys(data, ["isCheckedIn", "checkedIn"]),
                 status,
@@ -451,6 +465,7 @@ function AdminHackersPage() {
         id: accessCode,
         displayName: `${firstName} ${lastName}`.trim() || accessCode,
         email,
+        phoneNumber,
         hasLoggedIn: false,
         isCheckedIn: false,
         status: resolvedStatus,
@@ -527,6 +542,28 @@ function AdminHackersPage() {
     } finally {
       setSendingWaitlistRange(false);
     }
+  };
+
+  const handleExportCsv = () => {
+    const csvHeader = "Full Name,Phone Number,Email";
+    const csvRows = hackers.map((h) => {
+      const escapeCsv = (val: string) => {
+        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+          return `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      };
+      return [escapeCsv(h.displayName), escapeCsv(h.phoneNumber), escapeCsv(h.email)].join(",");
+    });
+    const csvContent = [csvHeader, ...csvRows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `hackers_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setActionsMenuOpen(false);
   };
 
   const handleAssignFoodGroups = async () => {
@@ -656,29 +693,59 @@ function AdminHackersPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setViewMode((prev) => (prev === "waitlistQueue" ? "all" : "waitlistQueue"))}
-                className="rounded-xl px-4 py-3 bg-[#4a226c] text-white font-semibold transition hover:bg-[#6a37a1]"
-              >
-                {viewMode === "waitlistQueue" ? "Back to All Hackers" : "Waitlist Queue"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowManualAdd((prev) => !prev)}
-                className="rounded-xl px-4 py-3 bg-[#3a1b56] text-white font-semibold transition hover:bg-[#5a2d84]"
-                disabled={viewMode === "waitlistQueue"}
-              >
-                {showManualAdd ? "Hide Manual Add" : "Manual Add Profile"}
-              </button>
-              <button
-                type="button"
-                onClick={handleAssignFoodGroups}
-                disabled={assigningFoodGroups || viewMode === "waitlistQueue"}
-                className="rounded-xl px-4 py-3 bg-[#8B5E3C] text-white font-semibold transition hover:bg-[#A0744F] disabled:opacity-60"
-              >
-                {assigningFoodGroups ? "Assigning..." : "Assign Food Groups"}
-              </button>
+              <div className="relative" ref={actionsMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setActionsMenuOpen((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-3 bg-[#4a226c] text-white font-semibold transition hover:bg-[#6a37a1]"
+                >
+                  Actions
+                  <FaChevronDown className={`text-xs transition-transform ${actionsMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {actionsMenuOpen && (
+                  <div className="absolute right-0 mt-2 min-w-56 rounded-xl border border-white/20 bg-black/90 backdrop-blur-md p-2 shadow-2xl z-50">
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 transition"
+                      onClick={() => {
+                        setViewMode((prev) => (prev === "waitlistQueue" ? "all" : "waitlistQueue"));
+                        setActionsMenuOpen(false);
+                      }}
+                    >
+                      {viewMode === "waitlistQueue" ? "Back to All Hackers" : "Waitlist Queue"}
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={viewMode === "waitlistQueue"}
+                      onClick={() => {
+                        setShowManualAdd((prev) => !prev);
+                        setActionsMenuOpen(false);
+                      }}
+                    >
+                      {showManualAdd ? "Hide Manual Add" : "Manual Add Profile"}
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={assigningFoodGroups || viewMode === "waitlistQueue"}
+                      onClick={() => {
+                        setActionsMenuOpen(false);
+                        handleAssignFoodGroups();
+                      }}
+                    >
+                      {assigningFoodGroups ? "Assigning..." : "Assign Food Groups"}
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full text-left rounded-lg px-3 py-2 text-sm text-white hover:bg-white/10 transition"
+                      onClick={handleExportCsv}
+                    >
+                      Export CSV
+                    </button>
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => router.push("/scanner")}
