@@ -14,6 +14,8 @@ type HackerRow = {
   hasLoggedIn: boolean;
   isCheckedIn: boolean;
   status: string;
+  normalizedStatus: "accepted" | "rejected" | "waitlist" | "";
+  waitlistNumber: number;
   lastScannedAt: string;
   waitlistedAt: string;
   waitlistedAtEpoch: number;
@@ -25,6 +27,7 @@ const ITEMS_PER_PAGE = 30;
 const PAGE_WINDOW_SIZE = 6;
 
 type ManualStatus = "accepted" | "rejected" | "waitlist";
+type AdminViewMode = "all" | "waitlistQueue";
 
 type ManualProfileForm = {
   firstName: string;
@@ -45,6 +48,23 @@ const EMPTY_MANUAL_PROFILE: ManualProfileForm = {
 };
 
 const toSafeString = (value: unknown): string => (typeof value === "string" ? value : "");
+
+const normalizeStatus = (value: unknown): "accepted" | "rejected" | "waitlist" | "" => {
+  const raw = toSafeString(value).trim().toLowerCase();
+  if (!raw) return "";
+  if (raw.startsWith("waitlist")) return "waitlist";
+  if (raw === "accepted") return "accepted";
+  if (raw === "rejected") return "rejected";
+  return "";
+};
+
+const extractWaitlistNumber = (value: unknown): number => {
+  const raw = toSafeString(value).trim();
+  const match = raw.match(/waitlist\s*#\s*(\d+)/i);
+  if (!match) return 0;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const normalizeKey = (key: string): string => key.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -159,6 +179,7 @@ const getDisplayName = (id: string, data: Record<string, unknown>): string => {
 function AdminHackersPage() {
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [viewMode, setViewMode] = useState<AdminViewMode>("all");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -173,6 +194,11 @@ function AdminHackersPage() {
   const [manualError, setManualError] = useState("");
   const [manualSuccess, setManualSuccess] = useState("");
   const [lastCreatedProfileId, setLastCreatedProfileId] = useState("");
+  const [waitlistRangeStart, setWaitlistRangeStart] = useState("");
+  const [waitlistRangeEnd, setWaitlistRangeEnd] = useState("");
+  const [sendingWaitlistRange, setSendingWaitlistRange] = useState(false);
+  const [waitlistRangeError, setWaitlistRangeError] = useState("");
+  const [waitlistRangeSuccess, setWaitlistRangeSuccess] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -202,6 +228,12 @@ function AdminHackersPage() {
         const rows = snap.docs
           .map((docSnap) => {
             const data = docSnap.data() as Record<string, unknown>;
+            const status = toSafeString(data.status).trim();
+            const normalizedStatus = normalizeStatus(status);
+            const waitlistNumber =
+              typeof data.waitlistNumber === "number" && Number.isFinite(data.waitlistNumber)
+                ? data.waitlistNumber
+                : extractWaitlistNumber(status);
             const scanCount =
               typeof data.scanCount === "number"
                 ? data.scanCount
@@ -214,7 +246,9 @@ function AdminHackersPage() {
                 email: toSafeString(data.email),
                 hasLoggedIn: Boolean(data.hasLoggedIn) || Boolean(data.hasLoggedin),
                 isCheckedIn: getBooleanByKeys(data, ["isCheckedIn", "checkedIn"]),
-                status: toSafeString(data.status).trim().toLowerCase(),
+                status,
+                normalizedStatus,
+                waitlistNumber,
                 lastScannedAt: formatDateValue(data.lastScannedAt),
               waitlistedAt: formatDateValue(data.waitlistedAt),
               waitlistedAtEpoch: dateToEpoch(data.waitlistedAt),
@@ -240,13 +274,21 @@ function AdminHackersPage() {
   }, [isAdmin]);
 
   const filteredHackers = useMemo(() => {
+    const sourceRows =
+      viewMode === "waitlistQueue"
+        ? hackers.filter((hacker) => hacker.normalizedStatus === "waitlist")
+        : hackers;
     const query = searchText.trim().toLowerCase();
-    const filtered = hackers.filter((hacker) => {
+    const filtered = sourceRows.filter((hacker) => {
       const matchesSearch =
         !query ||
         [hacker.displayName, hacker.email, hacker.id].some((candidate) =>
           candidate.toLowerCase().includes(query)
         );
+
+      if (viewMode === "waitlistQueue") {
+        return matchesSearch;
+      }
 
       const matchesCheckedIn =
         checkedInFilter === "all" ||
@@ -257,13 +299,18 @@ function AdminHackersPage() {
         (loggedInFilter === "true" ? hacker.hasLoggedIn : !hacker.hasLoggedIn);
 
       const matchesStatus =
-        statusFilter === "all" || hacker.status === statusFilter;
+        statusFilter === "all" || hacker.normalizedStatus === statusFilter;
 
       return matchesSearch && matchesCheckedIn && matchesLoggedIn && matchesStatus;
     });
 
-    if (statusFilter === "waitlist") {
+    if (viewMode === "waitlistQueue" || statusFilter === "waitlist") {
       return [...filtered].sort((a, b) => {
+        if (a.waitlistNumber && b.waitlistNumber && a.waitlistNumber !== b.waitlistNumber) {
+          return a.waitlistNumber - b.waitlistNumber;
+        }
+        if (a.waitlistNumber && !b.waitlistNumber) return -1;
+        if (!a.waitlistNumber && b.waitlistNumber) return 1;
         if (a.waitlistedAtEpoch !== b.waitlistedAtEpoch) {
           return a.waitlistedAtEpoch - b.waitlistedAtEpoch;
         }
@@ -272,20 +319,20 @@ function AdminHackersPage() {
     }
 
     return filtered;
-  }, [checkedInFilter, hackers, loggedInFilter, searchText, statusFilter]);
+  }, [checkedInFilter, hackers, loggedInFilter, searchText, statusFilter, viewMode]);
 
   const waitlistOrderById = useMemo(() => {
     const map = new Map<string, number>();
-    if (statusFilter !== "waitlist") return map;
+    if (viewMode !== "waitlistQueue" && statusFilter !== "waitlist") return map;
     filteredHackers.forEach((hacker, idx) => {
       map.set(hacker.id, idx + 1);
     });
     return map;
-  }, [filteredHackers, statusFilter]);
+  }, [filteredHackers, statusFilter, viewMode]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [checkedInFilter, loggedInFilter, searchText, statusFilter]);
+  }, [checkedInFilter, loggedInFilter, searchText, statusFilter, viewMode]);
 
   const totalPages = useMemo(() => {
     const pages = Math.ceil(filteredHackers.length / ITEMS_PER_PAGE);
@@ -362,12 +409,18 @@ function AdminHackersPage() {
     setManualSaving(true);
     try {
       const accessCode = await generateUniqueAccessCode();
+      const nextWaitlistNumber =
+        manualProfile.status === "waitlist"
+          ? hackers.reduce((max, row) => Math.max(max, row.waitlistNumber || 0), 0) + 1
+          : 0;
+      const resolvedStatus =
+        manualProfile.status === "waitlist" ? `waitlist #${nextWaitlistNumber}` : manualProfile.status;
       const payload: Record<string, unknown> = {
         access_code: accessCode,
         email,
         fname: firstName,
         lname: lastName,
-        status: manualProfile.status,
+        status: resolvedStatus,
         foodGroup: foodGroup || "",
         hasLoggedIn: false,
         isCheckedIn: false,
@@ -386,6 +439,7 @@ function AdminHackersPage() {
       }
       if (manualProfile.status === "waitlist") {
         payload.waitlistedAt = serverTimestamp();
+        payload.waitlistNumber = nextWaitlistNumber;
       }
 
       await setDoc(doc(db, HACKERS_COLLECTION, accessCode), payload);
@@ -396,7 +450,9 @@ function AdminHackersPage() {
         email,
         hasLoggedIn: false,
         isCheckedIn: false,
-        status: manualProfile.status,
+        status: resolvedStatus,
+        normalizedStatus: normalizeStatus(resolvedStatus),
+        waitlistNumber: nextWaitlistNumber,
         lastScannedAt: "Not available",
         waitlistedAt: manualProfile.status === "waitlist" ? new Date().toLocaleString() : "Not available",
         waitlistedAtEpoch: manualProfile.status === "waitlist" ? Date.now() : 0,
@@ -415,6 +471,58 @@ function AdminHackersPage() {
       setManualError(message);
     } finally {
       setManualSaving(false);
+    }
+  };
+
+  const handleSendWaitlistRangeEmails = async () => {
+    setWaitlistRangeError("");
+    setWaitlistRangeSuccess("");
+
+    const start = Number(waitlistRangeStart);
+    const end = Number(waitlistRangeEnd);
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start <= 0 || end <= 0) {
+      setWaitlistRangeError("Enter valid positive start and end queue numbers.");
+      return;
+    }
+    if (start > end) {
+      setWaitlistRangeError("Start number must be less than or equal to end number.");
+      return;
+    }
+
+    setSendingWaitlistRange(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("Please sign in again, then retry.");
+      }
+      const token = await user.getIdToken();
+      const response = await fetch("/api/admin/sendWaitlistQueueEmail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ startNumber: start, endNumber: end }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        sent?: number;
+        skipped?: number;
+        failed?: number;
+      };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || "Unable to send waitlist queue emails.");
+      }
+
+      setWaitlistRangeSuccess(
+        `Waitlist range email complete. Sent: ${payload.sent ?? 0}, Skipped: ${payload.skipped ?? 0}, Failed: ${payload.failed ?? 0}.`
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to send waitlist queue emails.";
+      setWaitlistRangeError(message);
+    } finally {
+      setSendingWaitlistRange(false);
     }
   };
 
@@ -497,14 +605,24 @@ function AdminHackersPage() {
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <FaUsers className="text-[#DDD059]" />
-                <h1 className="text-3xl font-bold">Admin Hackers</h1>
+                <h1 className="text-3xl font-bold">
+                  {viewMode === "waitlistQueue" ? "Waitlist Queue" : "Admin Hackers"}
+                </h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                onClick={() => setViewMode((prev) => (prev === "waitlistQueue" ? "all" : "waitlistQueue"))}
+                className="rounded-xl px-4 py-3 bg-[#4a226c] text-white font-semibold transition hover:bg-[#6a37a1]"
+              >
+                {viewMode === "waitlistQueue" ? "Back to All Hackers" : "Waitlist Queue"}
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowManualAdd((prev) => !prev)}
                 className="rounded-xl px-4 py-3 bg-[#3a1b56] text-white font-semibold transition hover:bg-[#5a2d84]"
+                disabled={viewMode === "waitlistQueue"}
               >
                 {showManualAdd ? "Hide Manual Add" : "Manual Add Profile"}
               </button>
@@ -518,7 +636,7 @@ function AdminHackersPage() {
             </div>
           </div>
 
-          {showManualAdd && (
+          {viewMode === "all" && showManualAdd && (
             <div className="mb-5 rounded-2xl border border-white/20 bg-black/30 p-4 md:p-5">
               <h2 className="text-lg font-semibold mb-3">Add Manual Hacker Profile</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -606,11 +724,54 @@ function AdminHackersPage() {
             <input
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              placeholder="Search by name, email, or document id"
+              placeholder={
+                viewMode === "waitlistQueue"
+                  ? "Search queue by name, email, or document id"
+                  : "Search by name, email, or document id"
+              }
               className="w-full rounded-xl pl-10 pr-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
             />
           </div>
 
+          {viewMode === "waitlistQueue" && (
+            <div className="mb-5 rounded-2xl border border-white/20 bg-black/30 p-4 md:p-5">
+              <h2 className="text-lg font-semibold mb-3">Send Waitlist Acceptance By Queue Range</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Start #</div>
+                  <input
+                    value={waitlistRangeStart}
+                    onChange={(e) => setWaitlistRangeStart(e.target.value.replace(/[^\d]/g, ""))}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="block">
+                  <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">End #</div>
+                  <input
+                    value={waitlistRangeEnd}
+                    onChange={(e) => setWaitlistRangeEnd(e.target.value.replace(/[^\d]/g, ""))}
+                    className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                    inputMode="numeric"
+                  />
+                </label>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={handleSendWaitlistRangeEmails}
+                    disabled={sendingWaitlistRange}
+                    className="w-full rounded-xl px-4 py-3 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] disabled:opacity-60"
+                  >
+                    {sendingWaitlistRange ? "Sending..." : "Send Range Email"}
+                  </button>
+                </div>
+              </div>
+              {waitlistRangeError && <div className="mt-3 text-sm text-red-300">{waitlistRangeError}</div>}
+              {waitlistRangeSuccess && <div className="mt-3 text-sm text-green-300">{waitlistRangeSuccess}</div>}
+            </div>
+          )}
+
+          {viewMode === "all" && (
           <div className="mb-5 grid grid-cols-1 md:grid-cols-3 gap-3">
             <label className="block">
               <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Has Logged In</div>
@@ -652,6 +813,7 @@ function AdminHackersPage() {
               </select>
             </label>
           </div>
+          )}
 
           {canShowPagination && renderPagination("mb-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3")}
 
@@ -695,25 +857,31 @@ function AdminHackersPage() {
                         Status:{" "}
                         <span
                           className={
-                            hacker.status === "accepted"
+                            hacker.normalizedStatus === "accepted"
                               ? "text-green-300"
-                              : hacker.status === "rejected"
+                              : hacker.normalizedStatus === "rejected"
                                 ? "text-red-300"
-                                : hacker.status === "waitlist"
+                                : hacker.normalizedStatus === "waitlist"
                                   ? "text-yellow-300"
                                 : "text-gray-200"
                           }
                         >
-                          {hacker.status || "unknown"}
+                          {hacker.status || hacker.normalizedStatus || "unknown"}
                         </span>
                       </div>
-                      {statusFilter === "waitlist" && (
+                      {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
                         <div className="text-xs text-gray-300 uppercase tracking-widest">
-                          Waitlist #:{" "}
+                          Queue #:{" "}
                           <span className="text-[#DDD059]">{waitlistOrderById.get(hacker.id) ?? "-"}</span>
                         </div>
                       )}
-                      {statusFilter === "waitlist" && (
+                      {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
+                        <div className="text-xs text-gray-300 uppercase tracking-widest">
+                          Waitlist #:{" "}
+                          <span className="text-[#DDD059]">{hacker.waitlistNumber || "-"}</span>
+                        </div>
+                      )}
+                      {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
                         <div className="text-xs text-gray-300 hidden lg:block">
                           Waitlisted At: <span className="text-gray-100">{hacker.waitlistedAt}</span>
                         </div>
