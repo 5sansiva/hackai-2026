@@ -39,6 +39,14 @@ type ScanStatus = {
   text: string;
 };
 
+type PendingWaitlistAssignment = {
+  hackerId: string;
+  scannedValue: string;
+  assignedNumber: number;
+  email: string;
+  displayName: string;
+};
+
 type ModeCounts = Record<ScanMode, number>;
 type StandardScanMode = Exclude<ScanMode, "waitlist">;
 
@@ -53,6 +61,24 @@ const HACKERS_COLLECTION = "hackers";
 const SCANNER_STATS_COLLECTION = "scannerStats";
 const SCANNER_STATS_DOC_ID = "global";
 const QR_SCAN_COOLDOWN_MS = 10000;
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+const normalizeStatus = (value: unknown): "accepted" | "rejected" | "waitlist" | "" => {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw.startsWith("waitlist")) return "waitlist";
+  if (raw === "accepted") return "accepted";
+  if (raw === "rejected") return "rejected";
+  return "";
+};
+
+const extractWaitlistNumber = (value: unknown): number => {
+  const raw = String(value || "").trim();
+  const match = raw.match(/waitlist\s*#\s*(\d+)/i);
+  if (!match) return 0;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const createEmptyCounts = (): ModeCounts => ({
   "check-in": 0,
@@ -102,6 +128,10 @@ function ScannerPage() {
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [statsCounts, setStatsCounts] = useState<ModeCounts>(createEmptyCounts);
   const [statsDocId, setStatsDocId] = useState("");
+  const [pendingWaitlistAssignment, setPendingWaitlistAssignment] = useState<PendingWaitlistAssignment | null>(null);
+  const [pendingWaitlistEmail, setPendingWaitlistEmail] = useState("");
+  const [pendingWaitlistError, setPendingWaitlistError] = useState("");
+  const [pendingWaitlistSaving, setPendingWaitlistSaving] = useState(false);
   const [records, setRecords] = useState<ScanRecord[]>(() => {
     if (typeof window === "undefined") return [];
     const raw = localStorage.getItem(SCAN_STORAGE_KEY);
@@ -210,6 +240,24 @@ function ScannerPage() {
     return SCANNER_STATS_DOC_ID;
   }, [statsDocId]);
 
+  const resolveNextWaitlistNumber = useCallback(async (): Promise<number> => {
+    const snap = await getDocs(collection(db, HACKERS_COLLECTION));
+    let maxWaitlistNumber = 0;
+    snap.docs.forEach((docSnap) => {
+      const data = docSnap.data() as Record<string, unknown>;
+      const numberFromField =
+        typeof data.waitlistNumber === "number" && Number.isFinite(data.waitlistNumber)
+          ? data.waitlistNumber
+          : 0;
+      const numberFromStatus = extractWaitlistNumber(data.status);
+      const currentMax = Math.max(numberFromField, numberFromStatus);
+      if (currentMax > maxWaitlistNumber) {
+        maxWaitlistNumber = currentMax;
+      }
+    });
+    return maxWaitlistNumber + 1;
+  }, []);
+
   const findHackerIdByQrValue = useCallback(async (rawValue: string): Promise<string | null> => {
     const trimmed = rawValue.trim();
     if (!trimmed) return null;
@@ -285,7 +333,7 @@ function ScannerPage() {
 
       const hackerData = hackerSnap.data() as Record<string, unknown>;
       const modeLabel = SCAN_MODES.find((item) => item.value === mode)?.label ?? mode;
-      const currentStatus = String(hackerData.status || "").trim().toLowerCase();
+      const currentStatus = normalizeStatus(hackerData.status);
 
       if (mode === "waitlist") {
         if (currentStatus === "waitlist") {
@@ -304,57 +352,29 @@ function ScannerPage() {
           return;
         }
 
-        const now = new Date();
-        const record: ScanRecord = {
-          id: `${now.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
-          mode,
-          value: trimmed,
-          createdAt: now.toLocaleString(),
-        };
-        const scanEntry = {
-          mode: record.mode,
-          value: record.value,
-          scannedAt: now.toISOString(),
-          scannedAtEpoch: now.getTime(),
-          createdAtLabel: record.createdAt,
-          status: "approved",
-        };
+        const nextWaitlistNumber = await resolveNextWaitlistNumber();
+        const firstName = String(
+          hackerData.fname || hackerData.first_name || hackerData.firstName || ""
+        ).trim();
+        const lastName = String(
+          hackerData.lname || hackerData.last_name || hackerData.lastName || ""
+        ).trim();
+        const displayName = `${firstName} ${lastName}`.trim() || trimmed;
+        const email = String(hackerData.email || "").trim().toLowerCase();
 
-        await updateDoc(hackerRef, {
-          status: "waitlist",
-          waitlistedAt: serverTimestamp(),
-          lastScannedAt: serverTimestamp(),
-          scanCount: increment(1),
-          scans: arrayUnion(scanEntry),
+        setPendingWaitlistAssignment({
+          hackerId,
+          scannedValue: trimmed,
+          assignedNumber: nextWaitlistNumber,
+          email,
+          displayName,
         });
-
-        let statsUpdated = false;
-        try {
-          const resolvedStatsDocId = await ensureStatsDocId();
-          await setDoc(
-            doc(db, SCANNER_STATS_COLLECTION, resolvedStatsDocId),
-            {
-              [MODE_STATS_FIELD[mode]]: increment(1),
-              updatedAt: serverTimestamp(),
-            },
-            { merge: true }
-          );
-          statsUpdated = true;
-        } catch (statsErr) {
-          console.error("Scanner stats update failed (non-blocking):", statsErr);
-        }
-
-        setRecords((prev) => [record, ...prev].slice(0, 100));
-        if (statsUpdated) {
-          setStatsCounts((prev) => ({
-            ...prev,
-            [mode]: prev[mode] + 1,
-          }));
-        }
+        setPendingWaitlistEmail(email);
+        setPendingWaitlistError("");
         setStatusWithHold({
-          tone: "success",
-          text: `Approved: moved ${trimmed} from rejected to waitlist. Yes, it's working.`,
-        });
+          tone: "info",
+          text: `Review waitlist assignment for ${displayName} (#${nextWaitlistNumber}).`,
+        }, 1000);
         return;
       }
 
@@ -371,7 +391,7 @@ function ScannerPage() {
       if (mode === "check-in" && currentStatus !== "accepted") {
         setStatusWithHold({
           tone: "error",
-          text: `Rejected: only accepted hackers can be checked in (current status: ${currentStatus || "unknown"}).`,
+          text: `Rejected: only accepted hackers can be checked in (current status: ${String(hackerData.status || "unknown")}).`,
         });
         return;
       }
@@ -495,7 +515,86 @@ function ScannerPage() {
         text: `Rejected: ${message}`,
       });
     }
-  }, [ensureStatsDocId, findHackerIdByQrValue, getBooleanByAliases, mode, setStatusWithHold]);
+  }, [ensureStatsDocId, findHackerIdByQrValue, getBooleanByAliases, mode, resolveNextWaitlistNumber, setStatusWithHold]);
+
+  const confirmWaitlistAssignment = useCallback(async () => {
+    if (!pendingWaitlistAssignment || pendingWaitlistSaving) return;
+
+    const finalEmail = pendingWaitlistEmail.trim().toLowerCase();
+    if (!EMAIL_RE.test(finalEmail)) {
+      setPendingWaitlistError("Enter a valid email before confirming.");
+      return;
+    }
+
+    setPendingWaitlistSaving(true);
+    setPendingWaitlistError("");
+
+    try {
+      const now = new Date();
+      const record: ScanRecord = {
+        id: `${now.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
+        mode: "waitlist",
+        value: pendingWaitlistAssignment.scannedValue,
+        createdAt: now.toLocaleString(),
+      };
+      const scanEntry = {
+        mode: record.mode,
+        value: record.value,
+        scannedAt: now.toISOString(),
+        scannedAtEpoch: now.getTime(),
+        createdAtLabel: record.createdAt,
+        status: "approved",
+      };
+
+      await updateDoc(doc(db, HACKERS_COLLECTION, pendingWaitlistAssignment.hackerId), {
+        email: finalEmail,
+        status: `waitlist #${pendingWaitlistAssignment.assignedNumber}`,
+        waitlistNumber: pendingWaitlistAssignment.assignedNumber,
+        waitlistedAt: serverTimestamp(),
+        lastScannedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        scanCount: increment(1),
+        scans: arrayUnion(scanEntry),
+      });
+
+      let statsUpdated = false;
+      try {
+        const resolvedStatsDocId = await ensureStatsDocId();
+        await setDoc(
+          doc(db, SCANNER_STATS_COLLECTION, resolvedStatsDocId),
+          {
+            [MODE_STATS_FIELD.waitlist]: increment(1),
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+        statsUpdated = true;
+      } catch (statsErr) {
+        console.error("Scanner stats update failed (non-blocking):", statsErr);
+      }
+
+      setRecords((prev) => [record, ...prev].slice(0, 100));
+      if (statsUpdated) {
+        setStatsCounts((prev) => ({
+          ...prev,
+          waitlist: prev.waitlist + 1,
+        }));
+      }
+
+      setStatusWithHold({
+        tone: "success",
+        text: `Approved: ${pendingWaitlistAssignment.displayName} moved to waitlist #${pendingWaitlistAssignment.assignedNumber}.`,
+      });
+      setPendingWaitlistAssignment(null);
+      setPendingWaitlistEmail("");
+      setPendingWaitlistError("");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to assign waitlist number.";
+      setPendingWaitlistError(message);
+    } finally {
+      setPendingWaitlistSaving(false);
+    }
+  }, [ensureStatsDocId, pendingWaitlistAssignment, pendingWaitlistEmail, pendingWaitlistSaving, setStatusWithHold]);
 
   const stopScanner = useCallback(() => {
     if (loopTimerRef.current) {
@@ -517,6 +616,12 @@ function ScannerPage() {
   const tickDetect = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || !detectorRef.current) return;
     if (isDetectingRef.current) return;
+    if (pendingWaitlistAssignment) {
+      loopTimerRef.current = window.setTimeout(() => {
+        void tickDetect();
+      }, 220);
+      return;
+    }
     if (Date.now() < statusHoldUntilRef.current) {
       loopTimerRef.current = window.setTimeout(() => {
         void tickDetect();
@@ -582,7 +687,7 @@ function ScannerPage() {
         void tickDetect();
       }, 220);
     }
-  }, [handleScanAttempt, setStatusWithHold]);
+  }, [handleScanAttempt, pendingWaitlistAssignment, setStatusWithHold]);
 
   const startScanner = useCallback(async () => {
     setScannerError("");
@@ -754,6 +859,46 @@ function ScannerPage() {
               </p>
             )}
           </div>
+
+          {pendingWaitlistAssignment && (
+            <div className="w-full mb-4 rounded-xl border border-yellow-300/35 bg-yellow-900/20 px-4 py-4">
+              <div className="text-sm uppercase tracking-widest text-yellow-200 mb-2">Waitlist Queue Assignment</div>
+              <div className="text-sm text-white mb-2">
+                {pendingWaitlistAssignment.displayName} will be assigned to waitlist #
+                <span className="text-[#DDD059] font-semibold"> {pendingWaitlistAssignment.assignedNumber}</span>.
+              </div>
+              <label className="block text-xs uppercase tracking-widest text-gray-200 mb-1">Email</label>
+              <input
+                value={pendingWaitlistEmail}
+                onChange={(e) => setPendingWaitlistEmail(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 bg-black/40 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+              />
+              {pendingWaitlistError && <div className="mt-2 text-sm text-red-300">{pendingWaitlistError}</div>}
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={confirmWaitlistAssignment}
+                  disabled={pendingWaitlistSaving}
+                  className="rounded-lg px-4 py-2 bg-[#2d0a4b] text-white font-semibold transition hover:bg-[#4b1c7a] disabled:opacity-60"
+                >
+                  {pendingWaitlistSaving ? "Saving..." : "OK - Assign Waitlist"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingWaitlistAssignment(null);
+                    setPendingWaitlistEmail("");
+                    setPendingWaitlistError("");
+                    setStatusWithHold({ tone: "info", text: "Waitlist assignment cancelled." }, 1200);
+                  }}
+                  disabled={pendingWaitlistSaving}
+                  className="rounded-lg px-4 py-2 border border-white/20 bg-black/30 text-white transition hover:bg-white/10 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="w-full mt-7">
             <div className="flex items-center gap-2 mb-3 text-gray-200">
