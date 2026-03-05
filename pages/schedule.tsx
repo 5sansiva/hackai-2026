@@ -29,6 +29,28 @@ function getTagImagePath(tag: EventType): string {
   return t ? t.tagImagePath : EVENT_TYPES[3].tagImagePath;
 }
 
+/**
+ * Parse a time string like "9:00 AM", "12:30 PM", or "9:00 AM - 10:00 AM"
+ * into minutes since midnight for sorting. Uses the start time if a range.
+ */
+function parseTimeToMinutes(time: string): number {
+  const raw = time.trim();
+  // Take only the start time if it's a range (e.g. "9:00 AM - 10:00 AM")
+  const startPart = raw.split(/\s*[-–—]\s*/)[0].trim();
+
+  const match = startPart.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (!match) return 9999; // push unparseable times to the end
+
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const period = match[3].toUpperCase();
+
+  if (period === "AM" && hours === 12) hours = 0;
+  if (period === "PM" && hours !== 12) hours += 12;
+
+  return hours * 60 + minutes;
+}
+
 export default function ScheduleSection() {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,8 +99,12 @@ export default function ScheduleSection() {
   }, []);
 
   const { saturday, sunday } = useMemo(() => {
-    const sat = events.filter((e) => e.day === "saturday").sort((a, b) => a.order - b.order);
-    const sun = events.filter((e) => e.day === "sunday").sort((a, b) => a.order - b.order);
+    const sat = events
+      .filter((e) => e.day === "saturday")
+      .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
+    const sun = events
+      .filter((e) => e.day === "sunday")
+      .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
     return { saturday: sat, sunday: sun };
   }, [events]);
 
