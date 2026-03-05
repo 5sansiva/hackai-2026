@@ -140,15 +140,20 @@ export default function ScheduleSection() {
 
   return (
     <div
-      className="relative w-full min-h-[180vh] pt-16 pb-40 px-4 md:px-6"
+      className="relative w-full pt-0 pb-40 px-4 md:px-6"
       style={{
-        backgroundImage: "url('/schedule/bg.svg')",
-        backgroundSize: "100% auto",
-        backgroundPosition: "center center",
-        backgroundRepeat: "no-repeat",
         overflowX: "hidden",
+        minHeight: "100vh",
       }}
     >
+      {/* Skateramp background */}
+      <img
+        src="/schedule/skateramp.png"
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none select-none opacity-60"
+      />
       {/* Dice doodle */}
       {/* Guitar doodle */}
       <img
@@ -171,7 +176,7 @@ export default function ScheduleSection() {
         </div>
 
         {/* Filter bar */}
-        <div className="flex flex-wrap items-center gap-3 justify-center mb-10">
+        <div className="flex flex-wrap items-center gap-3 justify-center mb-24 px-6 py-4">
           <span
             className="text-white/80 text-xs md:text-sm tracking-widest uppercase"
             style={{ fontFamily: "Octin Spraypaint" }}
@@ -205,9 +210,9 @@ export default function ScheduleSection() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
 
           {/* SATURDAY COLUMN */}
-          <div className="rounded-[28px] border-2 border-white/25 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_55px_rgba(0,0,0,0.65)] overflow-hidden min-h-[260px]">
+          <div className="rounded-[28px] border border-white/20 bg-white/10 backdrop-blur-lg shadow-[0_18px_55px_rgba(0,0,0,0.4)] overflow-hidden min-h-[260px]">
             <div
-              className="px-6 py-4 border-b border-white/15 text-white text-lg tracking-widest uppercase bg-white/5"
+              className="px-6 py-4 border-b border-white/15 text-white text-lg tracking-widest uppercase bg-white/15 backdrop-blur-sm"
               style={{ fontFamily: "Octin Spraypaint" }}
             >
               Saturday
@@ -221,7 +226,7 @@ export default function ScheduleSection() {
                 filteredSaturday.map((event) => (
                   <div
                     key={event.id}
-                    className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.0))]"
+                    className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white/[0.03] hover:bg-white/[0.08] transition-colors duration-150"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="text-white font-semibold tracking-widest uppercase text-base md:text-lg" style={{ fontFamily: "Octin Spraypaint" }}>
@@ -251,9 +256,9 @@ export default function ScheduleSection() {
           </div>
 
           {/* SUNDAY COLUMN */}
-          <div className="rounded-[28px] border-2 border-white/25 bg-black/25 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_18px_55px_rgba(0,0,0,0.65)] overflow-hidden min-h-[260px]">
+          <div className="rounded-[28px] border border-white/20 bg-white/10 backdrop-blur-lg shadow-[0_18px_55px_rgba(0,0,0,0.4)] overflow-hidden min-h-[260px]">
             <div
-              className="px-6 py-4 border-b border-white/15 text-white text-lg tracking-widest uppercase bg-white/5"
+              className="px-6 py-4 border-b border-white/15 text-white text-lg tracking-widest uppercase bg-white/15 backdrop-blur-sm"
               style={{ fontFamily: "Octin Spraypaint" }}
             >
               Sunday
@@ -267,7 +272,7 @@ export default function ScheduleSection() {
                 filteredSunday.map((event) => (
                   <div
                     key={event.id}
-                    className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),rgba(255,255,255,0.0))]"
+                    className="px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white/[0.03] hover:bg-white/[0.08] transition-colors duration-150"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="text-white font-semibold tracking-widest uppercase text-base md:text-lg" style={{ fontFamily: "Octin Spraypaint" }}>
