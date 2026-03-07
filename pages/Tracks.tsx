@@ -72,6 +72,7 @@ const miniTracks: MiniTrack[] = [
 export default function TracksPage() {
   const [tracks, setTracks] = useState<GeneralTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTrack, setSelectedTrack] = useState<GeneralTrack | null>(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -154,7 +155,7 @@ export default function TracksPage() {
         <div className="mt-8 w-full">
           <div className="mx-auto grid w-full max-w-[1060px] grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {tracks.map((t, index) => (
-              <GeneralTrackCard key={`${t.title}-${index}`} track={t} />
+              <GeneralTrackCard key={`${t.title}-${index}`} track={t} onClick={() => setSelectedTrack(t)} />
             ))}
           </div>
         </div>
@@ -169,6 +170,11 @@ export default function TracksPage() {
         </div> 
         */}
       </div>
+
+      {/* Track detail overlay */}
+      {selectedTrack && (
+        <TrackOverlay track={selectedTrack} onClose={() => setSelectedTrack(null)} />
+      )}
     </main>
   );
 }
@@ -192,10 +198,13 @@ function SectionTitle({
   );
 }
 
-function GeneralTrackCard({ track }: { track: GeneralTrack }) {
+function GeneralTrackCard({ track, onClick }: { track: GeneralTrack; onClick: () => void }) {
   return (
-    // FIX: Removed overflow-hidden and added a min-h-[320px] failsafe
-    <div className="relative aspect-[4/3] w-full min-h-[320px]">
+    <button
+      type="button"
+      onClick={onClick}
+      className="relative aspect-[4/3] w-full min-h-[320px] cursor-pointer transition-transform duration-200 hover:scale-[1.03] focus:outline-none"
+    >
       {/* Chalk frame asset */}
       <Image
         src={track.frameSrc}
@@ -205,15 +214,15 @@ function GeneralTrackCard({ track }: { track: GeneralTrack }) {
         priority
       />
 
-      {/* Inner content */}
+      {/* Inner content — title only */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 sm:px-10 py-10">
-        
+
         {/* Header Container */}
-        <div className="relative shrink-0 mb-4 mt-2 h-24 w-[100%] max-w-[420px]">
-          
+        <div className="relative shrink-0 h-24 w-[100%] max-w-[420px]">
+
           {/* CSS Mask Div */}
-          <div 
-            className={`absolute inset-0 z-0 pointer-events-none select-none scale-[1.6] translate-y-1`}
+          <div
+            className="absolute inset-0 z-0 pointer-events-none select-none scale-[1.6] translate-y-1"
             style={{
               backgroundColor: track.paintColor,
               WebkitMaskImage: `url(${track.paintSrc})`,
@@ -237,22 +246,90 @@ function GeneralTrackCard({ track }: { track: GeneralTrack }) {
             </div>
           </div>
         </div>
+      </div>
+    </button>
+  );
+}
+
+function TrackOverlay({ track, onClose }: { track: GeneralTrack; onClose: () => void }) {
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+      {/* Modal content */}
+      <div
+        className="relative z-10 w-full max-w-lg rounded-2xl border border-white/15 bg-[#1a0a2e]/95 px-8 py-10 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/60 hover:text-white transition text-2xl leading-none"
+        >
+          ✕
+        </button>
+
+        {/* Paint header with title */}
+        <div className="relative mx-auto h-20 w-full max-w-[360px] mb-6">
+          <div
+            className="absolute inset-0 z-0 pointer-events-none select-none scale-[1.6] translate-y-1"
+            style={{
+              backgroundColor: track.paintColor,
+              WebkitMaskImage: `url(${track.paintSrc})`,
+              WebkitMaskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskImage: `url(${track.paintSrc})`,
+              maskSize: 'contain',
+              maskRepeat: 'no-repeat',
+              maskPosition: 'center',
+            }}
+          />
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-4">
+            <div
+              className="text-center text-3xl sm:text-4xl drop-shadow-md text-white"
+              style={{ fontFamily: "Street Flow NYC" }}
+            >
+              {track.title}
+            </div>
+          </div>
+        </div>
 
         {/* Description */}
         <p
-          className="max-w-[420px] text-center text-[11px] sm:text-[13px] md:text-[15px] leading-relaxed tracking-[0.18em] text-white/80"
+          className="text-center text-[12px] sm:text-[14px] leading-relaxed tracking-[0.18em] text-white/80"
           style={{ fontFamily: "Octin Spraypaint" }}
         >
           {track.description}
         </p>
 
-        {/* Sponsor (if available) */}
+        {/* Sponsor */}
         {track.sponsor && (
-          <div className="mt-4 text-center">
-            <p className="text-xs text-white/60 mb-1" style={{ fontFamily: "Octin Spraypaint", letterSpacing: "0.1em" }}>
+          <div className="mt-6 text-center">
+            <p
+              className="text-xs text-white/50 mb-1"
+              style={{ fontFamily: "Octin Spraypaint", letterSpacing: "0.1em" }}
+            >
               SPONSORED BY
             </p>
-            <p className="text-sm font-medium text-white/90" style={{ fontFamily: "Octin Spraypaint" }}>
+            <p
+              className="text-sm font-medium text-white/90"
+              style={{ fontFamily: "Octin Spraypaint" }}
+            >
               {track.sponsor}
             </p>
           </div>

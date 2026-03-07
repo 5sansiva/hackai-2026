@@ -47,3 +47,6 @@ next-env.d.ts
 # local scripts
 /scripts/
 /csv/
+
+# project docs (local reference only)
+PROJECT_STRUCTURE.md

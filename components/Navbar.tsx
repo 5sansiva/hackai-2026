@@ -13,10 +13,11 @@ const Navbar = () => {
   const router = useRouter();
 
   const NAV: { label: string; id?: string; href?: string; external?: boolean }[] = [
-    { label: "ABOUT", id: "about" },
+    { label: "SCHEDULE", id: "schedule" },
     { label: "SPEAKER", id: "keynote" },
     { label: "SPONSORS", id: "sponsors" },
     { label: "TRAILER", href: "https://www.youtube.com/watch?v=7_SRKyABAmo", external: true },
+    { label: "PAINTBOX", href: "https://hackai26-paintbox.notion.site/", external: true },
     // { label: "LIVESTREAM", href: "https://www.youtube.com/live", external: true },
     // { label: "MENU", href: "/menu" },
   ];
