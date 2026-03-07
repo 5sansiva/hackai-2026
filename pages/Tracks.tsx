@@ -113,15 +113,6 @@ export default function TracksPage() {
   if (loading) {
     return (
       <main className="relative min-h-screen overflow-hidden text-white flex items-center justify-center">
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <Image
-            src="/Tracks/tracksbg.svg"
-            alt=""
-            fill
-            priority
-            className="object-cover" 
-          />
-        </div>
         <div className="relative z-10 text-xl" style={{ fontFamily: "Street Flow NYC" }}>
           Loading tracks...
         </div>
@@ -131,17 +122,6 @@ export default function TracksPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden text-white">
-
-      {/* Background image */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <Image
-          src="/Tracks/tracksbg.svg"
-          alt=""
-          fill
-          priority
-          className="object-cover" 
-        />
-      </div>
 
       <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-32">
         {/* Title */}
