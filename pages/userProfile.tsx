@@ -74,7 +74,12 @@ const getStatusPillClass = (rawStatus: string): string => {
 type ProfileInfo = {
   title: string;
   status: string;
+  foodGroup: string;
   requiresPhone: boolean;
+};
+
+const getFoodGroupFromDoc = (data: Record<string, unknown>): string => {
+  return getStringByKeys(data, ["foodGroup", "food_group", "foodgroup"]);
 };
 
 const getProfileInfo = async (email: string, fallbackDisplayName?: string | null): Promise<ProfileInfo> => {
@@ -83,6 +88,7 @@ const getProfileInfo = async (email: string, fallbackDisplayName?: string | null
     return {
       title: fallbackDisplayName?.trim() || "Your Profile",
       status: "",
+      foodGroup: "",
       requiresPhone: false,
     };
   }
@@ -101,6 +107,7 @@ const getProfileInfo = async (email: string, fallbackDisplayName?: string | null
         return {
           title: name || fallbackDisplayName?.trim() || "Your Profile",
           status: getStatusFromDoc(data),
+          foodGroup: getFoodGroupFromDoc(data),
           requiresPhone: !getPhoneFromDoc(data),
         };
       }
@@ -110,6 +117,7 @@ const getProfileInfo = async (email: string, fallbackDisplayName?: string | null
   return {
     title: fallbackDisplayName?.trim() || "Your Profile",
     status: "",
+    foodGroup: "",
     requiresPhone: false,
   };
 };
@@ -119,6 +127,7 @@ const UserProfile = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [profileTitle, setProfileTitle] = useState("Your Profile");
   const [profileStatus, setProfileStatus] = useState("");
+  const [profileFoodGroup, setProfileFoodGroup] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -133,6 +142,7 @@ const UserProfile = () => {
         if (active) {
           setProfileTitle("Your Profile");
           setProfileStatus("");
+          setProfileFoodGroup("");
         }
         return;
       }
@@ -152,11 +162,13 @@ const UserProfile = () => {
         if (active) {
           setProfileTitle(profileInfo.title || "Your Profile");
           setProfileStatus(profileInfo.status || "");
+          setProfileFoodGroup(profileInfo.foodGroup || "");
         }
       } catch {
         if (active) {
           setProfileTitle(user.displayName?.trim() || "Your Profile");
           setProfileStatus("");
+          setProfileFoodGroup("");
         }
       }
     };
@@ -183,9 +195,14 @@ const UserProfile = () => {
           )}
           {profileStatus && (
             <div
-              className={`mb-4 px-4 py-2 rounded-xl border text-sm font-semibold ${getStatusPillClass(profileStatus)}`}
+              className={`mb-2 px-4 py-2 rounded-xl border text-sm font-semibold ${getStatusPillClass(profileStatus)}`}
             >
               Status: {formatStatusLabel(profileStatus)}
+            </div>
+          )}
+          {profileFoodGroup && (
+            <div className="mb-4 px-4 py-2 rounded-xl border border-[#DDD059]/50 bg-[#DDD059]/15 text-sm font-semibold text-[#DDD059]">
+              Food Group: {profileFoodGroup.toUpperCase()}
             </div>
           )}
           <div className="w-44 h-44 bg-gradient-to-br from-[#2d0a4b] to-[#a259ff] flex items-center justify-center rounded-2xl shadow-lg mb-6">
