@@ -549,21 +549,19 @@ function AdminHackersPage() {
 
   const handleClearWaitlistQueue = async () => {
     const waitlistedHackers = hackers.filter((h) => h.normalizedStatus === "waitlist");
-    if (waitlistedHackers.length === 0) {
-      setClearWaitlistError("No waitlisted hackers to clear.");
-      return;
-    }
 
-    const confirmed = window.confirm(
-      `This will move ${waitlistedHackers.length} waitlisted hacker(s) back to "rejected" and reset the waitlist counter. Continue?`
-    );
-    if (!confirmed) return;
+    const confirmMsg = waitlistedHackers.length > 0
+      ? `This will move ${waitlistedHackers.length} waitlisted hacker(s) back to "rejected" and reset the waitlist counter to 0. Continue?`
+      : "No waitlisted hackers found, but the waitlist counter will be reset to 0. Continue?";
+
+    if (!window.confirm(confirmMsg)) return;
 
     setClearingWaitlist(true);
     setClearWaitlistError("");
     setClearWaitlistSuccess("");
 
     try {
+      // Move any waitlisted hackers back to rejected
       for (const hacker of waitlistedHackers) {
         await updateDoc(doc(db, HACKERS_COLLECTION, hacker.id), {
           status: "rejected",
@@ -573,7 +571,7 @@ function AdminHackersPage() {
         });
       }
 
-      // Reset the scannerStats waitlist counter to 0
+      // Always reset the scannerStats waitlist counter to 0
       const statsSnap = await getDocs(query(collection(db, "scannerStats"), limit(1)));
       const statsDocId = statsSnap.empty ? "global" : statsSnap.docs[0].id;
       await setDoc(
@@ -583,15 +581,20 @@ function AdminHackersPage() {
       );
 
       // Update local state
-      setHackers((prev) =>
-        prev.map((h) =>
-          h.normalizedStatus === "waitlist"
-            ? { ...h, status: "rejected", normalizedStatus: "rejected", waitlistNumber: 0, waitlistedAt: "Not available", waitlistedAtEpoch: 0 }
-            : h
-        )
-      );
+      if (waitlistedHackers.length > 0) {
+        setHackers((prev) =>
+          prev.map((h) =>
+            h.normalizedStatus === "waitlist"
+              ? { ...h, status: "rejected", normalizedStatus: "rejected", waitlistNumber: 0, waitlistedAt: "Not available", waitlistedAtEpoch: 0 }
+              : h
+          )
+        );
+      }
 
-      setClearWaitlistSuccess(`Cleared ${waitlistedHackers.length} hacker(s) from the waitlist.`);
+      const msg = waitlistedHackers.length > 0
+        ? `Cleared ${waitlistedHackers.length} hacker(s) from the waitlist and reset counter to 0.`
+        : "Waitlist counter reset to 0.";
+      setClearWaitlistSuccess(msg);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to clear waitlist queue.";
       setClearWaitlistError(message);
