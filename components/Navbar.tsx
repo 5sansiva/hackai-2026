@@ -284,7 +284,7 @@ const Navbar = () => {
       {/* Mobile dropdown (ensure it's ABOVE the backdrop) */}
       <div className="md:hidden mx-auto w-[min(1100px,calc(100%-2rem))] relative z-[55]">
         <div
-          className={`mt-3 overflow-y-auto rounded-3xl bg-black/50 backdrop-blur-md border border-white/15 transition-all duration-200 ${
+          className={`mt-3 overflow-y-auto rounded-3xl bg-black/75 backdrop-blur-md border border-white/10 transition-all duration-200 ${
             open
               ? "max-h-[420px] opacity-100 pointer-events-auto"
               : "max-h-0 opacity-0 pointer-events-none"
@@ -355,7 +355,7 @@ const Navbar = () => {
             )}
 
             {isAdmin && (
-              <div className="rounded-xl border border-[#DDD059]/35 bg-[#DDD059]/10 p-3 mt-2">
+              <div className="rounded-xl border border-[#DDD059]/20 bg-[#DDD059]/5 p-3 mt-2">
                 <div
                   className="text-xs uppercase tracking-widest text-[#DDD059] mb-2"
                   style={{ fontFamily: "Street Flow NYC" }}

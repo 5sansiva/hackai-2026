@@ -9,6 +9,7 @@ type GeneralTrack = {
   title: string;
   description: string;
   sponsor?: string;
+  link?: string;
   frameSrc: string; // chalk square frame (transparent center)
   paintSrc: string; // paint/splatter header (transparent bg)
   paintColor: string; // NEW: Tailwind background color class
@@ -18,6 +19,7 @@ type Track = {
   description: string;
   name: string;
   sponsor: string;
+  link?: string;
 }
 
 type MiniTrack = {
@@ -87,6 +89,7 @@ export default function TracksPage() {
             title: data.name || "Track Name",
             description: data.description || "This is a track.",
             sponsor: data.sponsor || "",
+            link: data.link || "",
             frameSrc: "/Tracks/generalborder.svg",
             paintSrc: "/Tracks/trackscribble.svg",
             paintColor: colors[index % colors.length],
@@ -316,6 +319,22 @@ function TrackOverlay({ track, onClose }: { track: GeneralTrack; onClose: () => 
         >
           {track.description}
         </p>
+
+        {/* Link */}
+        {track.link && (
+          <div className="mt-4 text-center">
+            <a
+              href={track.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs tracking-[0.15em] text-white/70 underline underline-offset-4 hover:text-white transition"
+              style={{ fontFamily: "Octin Spraypaint" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {track.link}
+            </a>
+          </div>
+        )}
 
         {/* Sponsor */}
         {track.sponsor && (
