@@ -83,12 +83,12 @@ export default function HackAIPage() {
             
           </section>
 
-          {/* <section
+          <section
               id="tracks"
               className="min-h-screen flex items-center justify-center m-6"
             >
               <TracksPage />
-            </section>  */}
+            </section> 
 
           <section id="schedule" className="relative min-h-screen flex items-center justify-center mb-10">
             <ScheduleSection />
