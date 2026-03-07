@@ -48,5 +48,4 @@ next-env.d.ts
 /scripts/
 /csv/
 
-# project docs (local reference only)
 PROJECT_STRUCTURE.md

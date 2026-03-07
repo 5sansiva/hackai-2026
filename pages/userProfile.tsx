@@ -137,6 +137,12 @@ const UserProfile = () => {
         return;
       }
 
+      const isPasswordProvider = user.providerData.some((p) => p.providerId === "password");
+      if (isPasswordProvider && !user.emailVerified) {
+        if (active) router.replace("/verify-email");
+        return;
+      }
+
       try {
         const profileInfo = await getProfileInfo(email, user.displayName);
         if (profileInfo.requiresPhone) {

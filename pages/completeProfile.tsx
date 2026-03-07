@@ -91,6 +91,12 @@ const CompleteProfile = () => {
           return;
         }
 
+        const isPasswordProvider = user.providerData.some((p) => p.providerId === "password");
+        if (isPasswordProvider && !user.emailVerified) {
+          if (active) router.replace("/verify-email");
+          return;
+        }
+
         const email = (user.email || "").trim().toLowerCase();
         if (active) {
           setUserEmail(email);
