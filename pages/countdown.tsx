@@ -17,12 +17,8 @@ function toMs(t: NonNullable<Props["target"]>) {
 }
 
 function nextMarch7Local(hour = 9, minute = 0, second = 0) {
-  const now = new Date();
-  const year = now.getFullYear();
-  const candidate = new Date(year, 2, 7, hour, minute, second, 0);
-  return candidate.getTime() <= now.getTime()
-    ? new Date(year + 1, 2, 7, hour, minute, second, 0)
-    : candidate;
+  const year = new Date().getFullYear();
+  return new Date(year, 2, 7, hour, minute, second, 0);
 }
 
 function pad2(n: number) {
@@ -50,6 +46,7 @@ export default function CountdownHero({
   }, []);
 
   const diff = Math.max(0, targetMs - now);
+  const isLive = diff === 0;
   const totalSec = Math.floor(diff / 1000);
 
   const days = Math.floor(totalSec / (60 * 60 * 24));
@@ -109,10 +106,16 @@ export default function CountdownHero({
 
         {/* ✅ MOBILE: no frame, stacked */}
         <div className="flex flex-col items-center gap-5 sm:hidden">
-          <Block value={safeDays} label="days" />
-          <Block value={safeHours} label="hours" />
-          <Block value={safeMins} label="mins" />
-          <Block value={safeSecs} label="sec" />
+          {isLive ? (
+            <NowDisplay />
+          ) : (
+            <>
+              <Block value={safeDays} label="days" />
+              <Block value={safeHours} label="hours" />
+              <Block value={safeMins} label="mins" />
+              <Block value={safeSecs} label="sec" />
+            </>
+          )}
         </div>
 
         {/* ✅ SM+ (tablet/desktop): keep the frame */}
@@ -125,15 +128,21 @@ export default function CountdownHero({
           />
 
           <div className="relative w-full px-8.5 py-7 md:px-15.5 md:py-11">
-            <div className="flex items-end justify-center gap-8 md:gap-10">
-              <Block value={safeDays} label="days" />
-              <DotColon />
-              <Block value={safeHours} label="hours" />
-              <DotColon />
-              <Block value={safeMins} label="mins" />
-              <DotColon />
-              <Block value={safeSecs} label="sec" />
-            </div>
+            {isLive ? (
+              <div className="flex items-center justify-center">
+                <NowDisplay />
+              </div>
+            ) : (
+              <div className="flex items-end justify-center gap-8 md:gap-10">
+                <Block value={safeDays} label="days" />
+                <DotColon />
+                <Block value={safeHours} label="hours" />
+                <DotColon />
+                <Block value={safeMins} label="mins" />
+                <DotColon />
+                <Block value={safeSecs} label="sec" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -178,6 +187,26 @@ export default function CountdownHero({
         }
       `}</style>
     </section>
+  );
+}
+
+function NowDisplay() {
+  return (
+    <div className="flex flex-col items-center">
+      <div
+        className="glitch leading-none text-[72px] sm:text-[88px] md:text-[112px] text-white"
+        style={{ fontFamily: "Octin Spraypaint", WebkitTextStroke: "1px #ff2fb2" }}
+        data-text="NOW"
+      >
+        NOW
+      </div>
+      <div
+        className="mt-2 sm:mt-4 text-[16px] sm:text-[22px] md:text-[26px] font-semibold text-emerald-200 tracking-wide drop-shadow-[0_2px_0_rgba(0,0,0,0.9)]"
+        style={{ WebkitTextStroke: "0.8px black" }}
+      >
+        hacking has begun
+      </div>
+    </div>
   );
 }
 
