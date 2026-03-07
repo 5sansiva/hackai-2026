@@ -21,6 +21,7 @@ type HackerRow = {
   waitlistedAt: string;
   waitlistedAtEpoch: number;
   scanCount: number;
+  foodGroup: string;
 };
 
 const HACKERS_COLLECTION = "hackers";
@@ -187,6 +188,7 @@ function AdminHackersPage() {
   const [loggedInFilter, setLoggedInFilter] = useState<"all" | "true" | "false">("all");
   const [checkedInFilter, setCheckedInFilter] = useState<"all" | "true" | "false">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "accepted" | "rejected" | "waitlist">("all");
+  const [foodGroupFilter, setFoodGroupFilter] = useState<"all" | "A" | "B">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [hackers, setHackers] = useState<HackerRow[]>([]);
   const [showManualAdd, setShowManualAdd] = useState(false);
@@ -273,6 +275,7 @@ function AdminHackersPage() {
               waitlistedAt: formatDateValue(data.waitlistedAt),
               waitlistedAtEpoch: dateToEpoch(data.waitlistedAt),
               scanCount,
+              foodGroup: getStringByKeys(data, ["foodGroup", "food_group", "foodgroup"]),
             };
           })
           .sort((a, b) => a.displayName.localeCompare(b.displayName));
@@ -321,7 +324,10 @@ function AdminHackersPage() {
       const matchesStatus =
         statusFilter === "all" || hacker.normalizedStatus === statusFilter;
 
-      return matchesSearch && matchesCheckedIn && matchesLoggedIn && matchesStatus;
+      const matchesFoodGroup =
+        foodGroupFilter === "all" || hacker.foodGroup.toUpperCase() === foodGroupFilter;
+
+      return matchesSearch && matchesCheckedIn && matchesLoggedIn && matchesStatus && matchesFoodGroup;
     });
 
     if (viewMode === "waitlistQueue" || statusFilter === "waitlist") {
@@ -339,7 +345,7 @@ function AdminHackersPage() {
     }
 
     return filtered;
-  }, [checkedInFilter, hackers, loggedInFilter, searchText, statusFilter, viewMode]);
+  }, [checkedInFilter, foodGroupFilter, hackers, loggedInFilter, searchText, statusFilter, viewMode]);
 
   const waitlistOrderById = useMemo(() => {
     const map = new Map<string, number>();
@@ -352,7 +358,7 @@ function AdminHackersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [checkedInFilter, loggedInFilter, searchText, statusFilter, viewMode]);
+  }, [checkedInFilter, foodGroupFilter, loggedInFilter, searchText, statusFilter, viewMode]);
 
   const totalPages = useMemo(() => {
     const pages = Math.ceil(filteredHackers.length / ITEMS_PER_PAGE);
@@ -478,6 +484,7 @@ function AdminHackersPage() {
         waitlistedAt: manualProfile.status === "waitlist" ? new Date().toLocaleString() : "Not available",
         waitlistedAtEpoch: manualProfile.status === "waitlist" ? Date.now() : 0,
         scanCount: 0,
+        foodGroup: manualProfile.foodGroup,
       };
 
       setHackers((prev) => [...prev, nextRow].sort((a, b) => a.displayName.localeCompare(b.displayName)));
@@ -983,7 +990,7 @@ function AdminHackersPage() {
           )}
 
           {viewMode === "all" && (
-          <div className="mb-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="mb-5 grid grid-cols-1 md:grid-cols-4 gap-3">
             <label className="block">
               <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Has Logged In</div>
               <select
@@ -1021,6 +1028,19 @@ function AdminHackersPage() {
                 <option value="accepted" className="text-black">Accepted</option>
                 <option value="rejected" className="text-black">Rejected</option>
                 <option value="waitlist" className="text-black">Waitlist</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <div className="text-xs uppercase tracking-widest text-gray-300 mb-1">Food Group</div>
+              <select
+                value={foodGroupFilter}
+                onChange={(e) => setFoodGroupFilter(e.target.value as "all" | "A" | "B")}
+                className="w-full rounded-xl px-4 py-3 bg-black/35 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+              >
+                <option value="all" className="text-black">All</option>
+                <option value="A" className="text-black">Group A</option>
+                <option value="B" className="text-black">Group B</option>
               </select>
             </label>
           </div>
