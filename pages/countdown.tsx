@@ -146,21 +146,23 @@ export default function CountdownHero({
           </div>
         </div>
 
-        <div className="relative mt-5 sm:mt-7 w-[min(980px,94vw)]">
-          <div className="absolute right-0 top-0 flex items-center gap-2">
-            <p
-              className="text-emerald-200 text-lg sm:text-xl md:text-3xl drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]"
-              style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "3px black", paintOrder: "stroke" }}
-            >
-              {footerText}
-            </p>
-            <span className="mt-2 flex gap-2">
-              <i className="h-2 w-2 rounded-full bg-emerald-200/90 shadow-[0_0_12px_rgba(110,231,183,0.55)]" />
-              <i className="h-2 w-2 rounded-full bg-emerald-200/70 shadow-[0_0_12px_rgba(110,231,183,0.45)]" />
-              <i className="h-2 w-2 rounded-full bg-emerald-200/55 shadow-[0_0_12px_rgba(110,231,183,0.35)]" />
-            </span>
+        {!isLive && (
+          <div className="relative mt-5 sm:mt-7 w-[min(980px,94vw)]">
+            <div className="absolute right-0 top-0 flex items-center gap-2">
+              <p
+                className="text-emerald-200 text-lg sm:text-xl md:text-3xl drop-shadow-[0_3px_0_rgba(0,0,0,0.85)]"
+                style={{ fontFamily: "Street Flow NYC", WebkitTextStroke: "3px black", paintOrder: "stroke" }}
+              >
+                {footerText}
+              </p>
+              <span className="mt-2 flex gap-2">
+                <i className="h-2 w-2 rounded-full bg-emerald-200/90 shadow-[0_0_12px_rgba(110,231,183,0.55)]" />
+                <i className="h-2 w-2 rounded-full bg-emerald-200/70 shadow-[0_0_12px_rgba(110,231,183,0.45)]" />
+                <i className="h-2 w-2 rounded-full bg-emerald-200/55 shadow-[0_0_12px_rgba(110,231,183,0.35)]" />
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <style jsx>{`
