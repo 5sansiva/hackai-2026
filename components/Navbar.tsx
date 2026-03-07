@@ -402,7 +402,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() =>
-                  window.open("https://discord.gg/756atmKkAq", "_blank")
+                  window.open("https://discord.gg/Q7hsRpDkRM", "_blank")
                 }
                 aria-label="Discord"
                 className="text-white hover:text-[#5865F2] transition-colors duration-300"
