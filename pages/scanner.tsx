@@ -126,6 +126,7 @@ const SCAN_MODES: { value: ScanMode; label: string; help: string }[] = [
 function ScannerPage() {
   const router = useRouter();
   const [mode, setMode] = useState<ScanMode>("check-in");
+  const modeRef = useRef<ScanMode>("check-in");
   const [status, setStatus] = useState<ScanStatus | null>(null);
   const [scannerActive, setScannerActive] = useState(false);
   const [scannerError, setScannerError] = useState("");
@@ -133,6 +134,7 @@ function ScannerPage() {
   const [statsCounts, setStatsCounts] = useState<ModeCounts>(createEmptyCounts);
   const [statsDocId, setStatsDocId] = useState("");
   const [pendingWaitlistAssignment, setPendingWaitlistAssignment] = useState<PendingWaitlistAssignment | null>(null);
+  const pendingWaitlistRef = useRef<PendingWaitlistAssignment | null>(null);
   const [pendingWaitlistEmail, setPendingWaitlistEmail] = useState("");
   const [pendingWaitlistError, setPendingWaitlistError] = useState("");
   const [pendingWaitlistSaving, setPendingWaitlistSaving] = useState(false);
@@ -148,6 +150,14 @@ function ScannerPage() {
   const statusHoldUntilRef = useRef(0);
   const isDetectingRef = useRef(false);
   const hackerIdCacheRef = useRef<Record<string, string>>({});
+
+  // Keep refs in sync so the recursive tickDetect loop always reads the latest values
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+  useEffect(() => {
+    pendingWaitlistRef.current = pendingWaitlistAssignment;
+  }, [pendingWaitlistAssignment]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -336,6 +346,7 @@ function ScannerPage() {
   }, []);
 
   const handleScanAttempt = useCallback(async (value: string) => {
+    const currentMode = modeRef.current;
     const trimmed = value.trim();
     if (!trimmed) {
       setStatusWithHold({ tone: "error", text: "Rejected: no QR value detected." });
@@ -360,10 +371,10 @@ function ScannerPage() {
       }
 
       const hackerData = hackerSnap.data() as Record<string, unknown>;
-      const modeLabel = SCAN_MODES.find((item) => item.value === mode)?.label ?? mode;
+      const modeLabel = SCAN_MODES.find((item) => item.value === currentMode)?.label ?? currentMode;
       const currentStatus = normalizeStatus(hackerData.status);
 
-      if (mode === "waitlist") {
+      if (currentMode === "waitlist") {
         if (currentStatus === "waitlist") {
           setStatusWithHold({
             tone: "error",
@@ -390,13 +401,15 @@ function ScannerPage() {
         const displayName = `${firstName} ${lastName}`.trim() || trimmed;
         const email = String(hackerData.email || "").trim().toLowerCase();
 
-        setPendingWaitlistAssignment({
+        const assignment: PendingWaitlistAssignment = {
           hackerId,
           scannedValue: trimmed,
           assignedNumber: nextWaitlistNumber,
           email,
           displayName,
-        });
+        };
+        pendingWaitlistRef.current = assignment;
+        setPendingWaitlistAssignment(assignment);
         setPendingWaitlistEmail(email);
         setPendingWaitlistError("");
         setStatusWithHold({
@@ -406,7 +419,7 @@ function ScannerPage() {
         return;
       }
 
-      const modeConfig = MODE_CONFIG[mode];
+      const modeConfig = MODE_CONFIG[currentMode];
 
       const isWaitlisted = currentStatus === "waitlist";
 
@@ -418,7 +431,7 @@ function ScannerPage() {
         return;
       }
 
-      if (mode === "check-in" && !isWaitlisted && currentStatus !== "accepted") {
+      if (currentMode === "check-in" && !isWaitlisted && currentStatus !== "accepted") {
         setStatusWithHold({
           tone: "error",
           text: `Rejected: only accepted or waitlisted hackers can be checked in (current status: ${String(hackerData.status || "unknown")}).`,
@@ -426,7 +439,7 @@ function ScannerPage() {
         return;
       }
 
-      if (mode !== "check-in" && currentStatus !== "accepted") {
+      if (currentMode !== "check-in" && currentStatus !== "accepted") {
         setStatusWithHold({
           tone: "error",
           text: `Rejected: only accepted hackers can be scanned for ${modeLabel} (current status: ${String(hackerData.status || "unknown")}).`,
@@ -464,7 +477,7 @@ function ScannerPage() {
       const now = new Date();
       const record: ScanRecord = {
         id: `${now.getTime()}-${Math.random().toString(16).slice(2, 8)}`,
-        mode,
+        mode: currentMode,
         value: trimmed,
         createdAt: now.toLocaleString(),
       };
@@ -485,7 +498,7 @@ function ScannerPage() {
       };
 
       // If a waitlisted hacker is checking in, promote their status to accepted
-      if (mode === "check-in" && isWaitlisted) {
+      if (currentMode === "check-in" && isWaitlisted) {
         updates.status = "accepted";
         updates.updatedAt = serverTimestamp();
       }
@@ -497,7 +510,7 @@ function ScannerPage() {
         await setDoc(
           doc(db, SCANNER_STATS_COLLECTION, resolvedStatsDocId),
           {
-            [MODE_STATS_FIELD[mode]]: increment(1),
+            [MODE_STATS_FIELD[currentMode]]: increment(1),
             updatedAt: serverTimestamp(),
           },
           { merge: true }
@@ -511,10 +524,10 @@ function ScannerPage() {
       if (statsUpdated) {
         setStatsCounts((prev) => ({
           ...prev,
-          [mode]: prev[mode] + 1,
+          [currentMode]: prev[currentMode] + 1,
         }));
       }
-      if (mode === "check-in") {
+      if (currentMode === "check-in") {
         const firstName = String(
           hackerData.fname || hackerData.first_name || hackerData.firstName || ""
         ).trim();
@@ -541,7 +554,7 @@ function ScannerPage() {
         text: `Rejected: ${message}`,
       });
     }
-  }, [ensureStatsDocId, findHackerIdByQrValue, getBooleanByAliases, mode, resolveNextWaitlistNumber, saveScanRecord, setStatusWithHold]);
+  }, [ensureStatsDocId, findHackerIdByQrValue, getBooleanByAliases, resolveNextWaitlistNumber, saveScanRecord, setStatusWithHold]);
 
   const confirmWaitlistAssignment = useCallback(async () => {
     if (!pendingWaitlistAssignment || pendingWaitlistSaving) return;
@@ -611,6 +624,7 @@ function ScannerPage() {
         tone: "success",
         text: `Approved: ${pendingWaitlistAssignment.displayName} moved to waitlist #${pendingWaitlistAssignment.assignedNumber}.`,
       });
+      pendingWaitlistRef.current = null;
       setPendingWaitlistAssignment(null);
       setPendingWaitlistEmail("");
       setPendingWaitlistError("");
@@ -642,7 +656,7 @@ function ScannerPage() {
   const tickDetect = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || !detectorRef.current) return;
     if (isDetectingRef.current) return;
-    if (pendingWaitlistAssignment) {
+    if (pendingWaitlistRef.current) {
       loopTimerRef.current = window.setTimeout(() => {
         void tickDetect();
       }, 220);
@@ -677,7 +691,7 @@ function ScannerPage() {
       const rawValue = codes[0]?.rawValue?.trim();
       if (rawValue) {
         const nowMs = Date.now();
-        const scanKey = `${mode}:${rawValue.toLowerCase()}`;
+        const scanKey = `${modeRef.current}:${rawValue.toLowerCase()}`;
         const lastSeenAt = recentQrScansRef.current[scanKey] ?? 0;
         if (nowMs - lastSeenAt < QR_SCAN_COOLDOWN_MS) {
           setStatusWithHold({
@@ -713,7 +727,7 @@ function ScannerPage() {
         void tickDetect();
       }, 220);
     }
-  }, [handleScanAttempt, pendingWaitlistAssignment, setStatusWithHold]);
+  }, [handleScanAttempt, setStatusWithHold]);
 
   const startScanner = useCallback(async () => {
     setScannerError("");
@@ -817,6 +831,7 @@ function ScannerPage() {
               value={mode}
               onChange={(e) => {
                 const newMode = e.target.value as ScanMode;
+                modeRef.current = newMode;
                 setMode(newMode);
                 if (scannerActive) {
                   stopScanner();
@@ -925,6 +940,7 @@ function ScannerPage() {
                 <button
                   type="button"
                   onClick={() => {
+                    pendingWaitlistRef.current = null;
                     setPendingWaitlistAssignment(null);
                     setPendingWaitlistEmail("");
                     setPendingWaitlistError("");
