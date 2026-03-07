@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { FaChevronDown, FaChevronRight, FaSearch, FaUsers, FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import { Timestamp, collection, deleteField, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { Timestamp, collection, deleteField, doc, getDoc, getDocs, limit, query, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import Navbar from "@/components/Navbar";
 import { auth, db } from "@/firebase/clientApp";
 import { isAdminEmail } from "@/utils/adminAccess";
@@ -208,6 +208,7 @@ function AdminHackersPage() {
   const [foodGroupError, setFoodGroupError] = useState("");
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const waitlistRenumberRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -292,6 +293,54 @@ function AdminHackersPage() {
       cancelled = true;
     };
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (isAdmin !== true || loading || hackers.length === 0 || waitlistRenumberRef.current) return;
+
+    const waitlisted = hackers
+      .filter((h) => h.normalizedStatus === "waitlist")
+      .sort((a, b) => {
+        if (a.waitlistedAtEpoch !== b.waitlistedAtEpoch) return a.waitlistedAtEpoch - b.waitlistedAtEpoch;
+        return a.displayName.localeCompare(b.displayName);
+      });
+
+    if (waitlisted.length === 0) { waitlistRenumberRef.current = true; return; }
+
+    const needsRenumber = waitlisted.some((h, idx) => h.waitlistNumber !== idx + 1);
+    if (!needsRenumber) { waitlistRenumberRef.current = true; return; }
+
+    waitlistRenumberRef.current = true;
+
+    const renumber = async () => {
+      const batch = writeBatch(db);
+      waitlisted.forEach((hacker, idx) => {
+        const newNumber = idx + 1;
+        batch.update(doc(db, HACKERS_COLLECTION, hacker.id), {
+          waitlistNumber: newNumber,
+          status: `waitlist #${newNumber}`,
+        });
+      });
+      await batch.commit();
+
+      try {
+        const statsSnap = await getDocs(query(collection(db, "scannerStats"), limit(1)));
+        if (!statsSnap.empty) {
+          await setDoc(statsSnap.docs[0].ref, { waitlist: waitlisted.length }, { merge: true });
+        }
+      } catch { /* non-blocking */ }
+
+      setHackers((prev) =>
+        prev.map((h) => {
+          const idx = waitlisted.findIndex((wh) => wh.id === h.id);
+          if (idx === -1) return h;
+          const newNumber = idx + 1;
+          return { ...h, waitlistNumber: newNumber, status: `waitlist #${newNumber}` };
+        })
+      );
+    };
+
+    void renumber();
+  }, [isAdmin, loading, hackers]);
 
   const filteredHackers = useMemo(() => {
     const sourceRows =
@@ -1077,19 +1126,15 @@ function AdminHackersPage() {
                                 : "text-gray-200"
                           }
                         >
-                          {hacker.status || hacker.normalizedStatus || "unknown"}
+                          {hacker.normalizedStatus === "waitlist" && waitlistOrderById.get(hacker.id)
+                            ? `WAITLIST #${waitlistOrderById.get(hacker.id)}`
+                            : hacker.status || hacker.normalizedStatus || "unknown"}
                         </span>
                       </div>
                       {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
                         <div className="text-xs text-gray-300 uppercase tracking-widest">
-                          Queue #:{" "}
-                          <span className="text-[#DDD059]">{waitlistOrderById.get(hacker.id) ?? "-"}</span>
-                        </div>
-                      )}
-                      {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
-                        <div className="text-xs text-gray-300 uppercase tracking-widest">
                           Waitlist #:{" "}
-                          <span className="text-[#DDD059]">{hacker.waitlistNumber || "-"}</span>
+                          <span className="text-[#DDD059]">{waitlistOrderById.get(hacker.id) ?? "-"}</span>
                         </div>
                       )}
                       {(viewMode === "waitlistQueue" || statusFilter === "waitlist") && (
