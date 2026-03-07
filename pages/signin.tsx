@@ -9,6 +9,7 @@ import {
   getAdditionalUserInfo,
   GoogleAuthProvider,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -41,9 +42,10 @@ const SignIn = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"register" | "login">("login");
+  const [mode, setMode] = useState<"register" | "login" | "forgot">("login");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const isAuthGuardPausedRef = useRef(false);
 
   const getHackersByEmail = useCallback(async (rawEmail: string): Promise<HackerMatch[]> => {
@@ -396,6 +398,32 @@ const SignIn = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isValidEmail(normalizedEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+      setForgotSent(true);
+    } catch (err: unknown) {
+      const code =
+        typeof err === "object" && err !== null && "code" in err
+          ? String((err as { code: unknown }).code)
+          : "";
+      if (code === "auth/user-not-found") {
+        setError("No account found with that email.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to send reset email. Try again.");
+      }
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -427,6 +455,45 @@ const SignIn = () => {
           }}
         >
           <div className="w-full px-4 md:px-8">
+            {mode === "forgot" && (
+              <form onSubmit={handleForgotPassword} className="w-full flex flex-col items-center">
+                <h2 className="text-3xl font-bold mb-2 text-center">Reset Password</h2>
+                <div className="mb-4 text-center text-gray-400">
+                  Enter your email and we&apos;ll send you a reset link.
+                </div>
+                {forgotSent ? (
+                  <div className="text-green-400 text-center mb-4">
+                    Reset email sent! Check your inbox.
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="email"
+                      placeholder="Enter your email address"
+                      className="mb-4 px-4 py-3 rounded-lg border border-gray-300 w-full text-lg focus:outline-none focus:ring-2 focus:ring-[#a259ff]"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="w-full py-3 rounded-lg bg-[#2d0a4b] text-white font-semibold text-lg hover:bg-[#4b1c7a] transition mb-2"
+                      disabled={loading}
+                    >
+                      {loading ? "Sending..." : "Send Reset Email"}
+                    </button>
+                  </>
+                )}
+                {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
+                <span
+                  className="text-green-300 cursor-pointer underline text-sm mt-2"
+                  onClick={() => { setMode("login"); setForgotSent(false); setError(""); }}
+                >
+                  Back to sign in
+                </span>
+              </form>
+            )}
+            {mode !== "forgot" && (
             <form onSubmit={handleSubmit} className="w-full flex flex-col items-center">
           <h2 className="text-3xl font-bold mb-2 text-center">
             {mode === "register" ? "Create an account" : "Sign in"}
@@ -491,6 +558,16 @@ const SignIn = () => {
             onChange={e => setPassword(e.target.value)}
             required
           />
+          {mode === "login" && (
+            <div className="w-full text-right mb-2 -mt-2">
+              <span
+                className="text-green-300 cursor-pointer underline text-sm"
+                onClick={() => { setMode("forgot"); setError(""); setForgotSent(false); }}
+              >
+                Forgot password?
+              </span>
+            </div>
+          )}
           <div className="w-full flex flex-col gap-2 mb-4">
             <button type="submit" className="w-full py-3 rounded-lg bg-[#2d0a4b] text-white font-semibold text-lg hover:bg-[#4b1c7a] transition" disabled={loading}>
               {loading ? "Loading..." : mode === "register" ? "Create Account" : "Sign In"}
@@ -498,6 +575,7 @@ const SignIn = () => {
           </div>
           {error && <div className="text-red-500 mb-2 text-sm">{error}</div>}
             </form>
+            )}
           </div>
         </div>
       </div>
